@@ -139,10 +139,10 @@
         <img src="Logo.png" alt="Logo">
     
     
-    <h1>Selecciona una Categoría</h1></div>
+    <h1>Selecciona un esquema</h1></div>
     <div class="container" id="listaCategorias"></div>
     
-    <h1>Selecciona tus Cantos</h1>
+    <h1>Selecciona tus cantos</h1>
     <div class="container" id="listaCantos" style="display: none;"></div>
 
     <h2>Esquema de Cantos</h2>
@@ -162,6 +162,9 @@
 
     <script>
         let cantos = {
+             "Entrada": [
+                { titulo: "Portones - Xavier Gonzalez", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ],
             "Ten Piedad": [
                 { titulo: "Señor ten piedad Benigna Carrillo", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] },
                 { titulo: "Gloria Palazo", imgs: ["gloria2-1.jpg", "gloria2-2.jpg", "gloria2-3.jpg"] }
@@ -169,13 +172,23 @@
             "Gloria": [
                 { titulo: "Gloria Benigna Carrillo", imgs: ["Gloria/GloriaBenigna1.jpg", "Gloria/GloriaBenigna2.jpg"] },
                 { titulo: "Gloria A. Mejía - Melodica", imgs: ["gloria1.jpg", "gloria2.jpg"] },
-                { titulo: "Gloria A. Mejía - Ritmica", imgs: ["gloria1.jpg", "gloria2.jpg"] },
+                { titulo: "Gloria A. Mejía - Rítmica", imgs: ["gloria1.jpg", "gloria2.jpg"] },
                 { titulo: "Gloria Palazo", imgs: ["gloria2-1.jpg", "gloria2-2.jpg", "gloria2-3.jpg"] }
             ],
             "Aleluya": [
-                { titulo: "Aleluya 1", imgs: ["aleluya1.jpg"] },
-                { titulo: "Aleluya 2", imgs: ["aleluya2.jpg"] }
+                { titulo: "Festival Alleluia - James Chepponis", imgs: ["aleluya1.jpg"] }
+            ],
+             "Ofertorio": [
+                { titulo: "Recibe - Delfino Madrigal", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ],
+             "Santo": [
+                { titulo: "Santo - Marco Frisina", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ],
+             "Cordero": [
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
             ]
+            
+            
         };
         let esquema = [];
         let imagenesActuales = [];
