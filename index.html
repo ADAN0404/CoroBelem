@@ -6,97 +6,24 @@
     <title>Coro Belém</title>
     <link rel="icon" type="image/x-icon" href="Logo.png" />
     <style>
-        body { 
-            font-family: 'Times New Roman', serif; 
-            text-align: center; 
-            background: url('fondo.jfif') no-repeat center center fixed; 
-            background-size: cover; 
-            color: white; 
+        body {
+            font-family: 'Times New Roman', serif;
+            text-align: center;
+            background: url('fondo.jfif') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
         }
         ..menu {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed; /* Fija la barra arriba */
-    top: 0;
-    width: 100%;
-    z-index: 1000; /* Asegura que esté encima del overlay */
-}
-
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    z-index: 1000;
-}
-
-
-        .menu img {
-            height: 200px;
-            margin-right: 20px;
-        }
-        .menu h1 {
-            margin: 0;
-            color: white;
-            text-align: center;
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 20px auto; 
-            padding: 20px; 
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px; 
-            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.2); 
-        }
-        .close-btn, .nav-btn {
-            position: absolute;
-            top: 20px;
-            background: red;
-            color: white;
+            background: rgba(0, 0, 0, 0.5);
             padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
         }
-        .close-btn { right: 20px; }
-        .nav-btn { background: #ffcc00; color: black; }
-        .prev-btn { left: 20px; }
-        .next-btn { right: 70px; }
-
-
-        .canto-item, .categoria-item { 
-            margin: 10px 0; 
-            cursor: pointer; 
-            padding: 10px; 
-            background: #444; 
-            border-radius: 5px; 
-            transition: 0.3s; 
-        }
-        .canto-item:hover, .categoria-item:hover { background: #666; }
-        .selected-cantos { margin-top: 20px; padding: 10px; background: #333; border-radius: 5px; }
-        .remove-btn { margin-left: 10px; color: red; cursor: pointer; }
-        .generate-btn { 
-            margin-top: 20px; 
-            padding: 10px; 
-            background: #ffcc00; 
-            color: black; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            display: inline-block; 
-            transition: 0.3s; 
-        }
-        .generate-btn:hover { background: #ff9900; }
-
-        /* Estilos para la subcapa del cancionero */
         .overlay {
             position: fixed;
             top: 0;
@@ -111,6 +38,47 @@
             justify-content: center;
             z-index: 1000;
         }
+        .menu img { height: 200px; margin-right: 20px; }
+        .container {
+            max-width: 600px;
+            margin: 20px auto 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.2);
+        }
+        select, .canto-item, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .canto-item:hover, button:hover { background: #666; }
+        .selected-cantos div {
+            padding: 20px;
+            background: #333;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        .remove-btn { color: red; cursor: pointer; margin-left: 10px; }
+        .close-btn, .nav-btn {
+            position: absolute;
+            top: 20px;
+            background: red;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .close-btn { right: 20px; }
+        .nav-btn { background: #ffcc00; color: black; }
+        .prev-btn { left: 20px; }
+        .next-btn { right: 70px; }
         .overlay img {
             max-width: 100%;
             max-height: 100%;
@@ -127,7 +95,6 @@
             cursor: pointer;
             font-size: 18px;
         }
-
         @media (max-width: 768px) {
             .container { max-width: 90%; }
             .menu { flex-direction: column; text-align: center; }
@@ -138,21 +105,33 @@
 <body>
     <div class="menu">
         <img src="Logo.png" alt="Logo">
-    
-    
-    <h1>Selecciona un esquema</h1></div>
-    <div class="container" id="listaCategorias"></div>
-    
-    <h1>Selecciona tus cantos</h1>
-    <div class="container" id="listaCantos" style="display: none;"></div>
+        <h1>Selecciona un esquema</h1>
+    </div>
 
-    <h2>Esquema de Cantos</h2>
+    <div class="container">
+        <select id="esquemaSelect" onchange="cargarCategorias()">
+            <option value="Ordinario">Ordinario</option>
+            <option value="Cuaresma">Cuaresma</option>
+        </select>
+    </div>
+
+    <div class="container" id="listaCategorias">
+        <h2>Categorías</h2>
+    </div>
+
+    <div class="container" id="listaCantos" style="display: none;">
+        <h2>Cantos Disponibles</h2>
+    </div>
+
     <div class="container selected-cantos" id="esquemaCantos">
+        <h2>Esquema de Cantos</h2>
         <p>No has seleccionado ningún canto.</p>
     </div>
-    
-    <div class="generate-btn" onclick="generarCancionero()">Generar Cancionero</div>
 
+    <div class="container">
+        <button onclick="generarCancionero()">Generar Cancionero</button>
+    </div>
+    
     <!-- Subcapa del cancionero -->
     <div class="overlay" id="overlay">
         <div class="close-btn" onclick="cerrarCancionero()">✖</div>
@@ -162,8 +141,9 @@
     </div>
 
     <script>
-        let cantos = {
-             "Entrada": [
+        let cantosEsquemas = {
+            "Ordinario": {
+                "Entrada": [
                 { titulo: "Portones - Xavier Gonzalez", imgs: ["Entrada/Portones - Xavier.jpg"] }
             ],
             "Ten Piedad": [
@@ -209,29 +189,36 @@
             ]
             
             
+        },
+            "Cuaresma": {
+                "Entrada": [{ titulo: "Santo Juan Jauregui", imgs: ["Santo/Santo Jauregui.jpg"] }],
+                "Salmo": [{ titulo: "Salmo 50 - Misericordia Señor" }],
+                "Aclamación": [{ titulo: "Tu Palabra Me Da Vida" }]
+            }
         };
-        let esquema = [];
-        let imagenesActuales = [];
-        let indiceImagen = 0;
+
+        let cantosSeleccionados = [];
 
         function cargarCategorias() {
+            let esquemaSeleccionado = document.getElementById("esquemaSelect").value;
             const contenedor = document.getElementById("listaCategorias");
-            contenedor.innerHTML = "";
-            for (let categoria in cantos) {
+            contenedor.innerHTML = "<h2>Categorías</h2>";
+            
+            for (let categoria in cantosEsquemas[esquemaSeleccionado]) {
                 let div = document.createElement("div");
-                div.classList.add("categoria-item");
+                div.classList.add("canto-item");
                 div.innerText = categoria;
-                div.onclick = () => mostrarCantos(categoria);
+                div.onclick = () => mostrarCantos(categoria, esquemaSeleccionado);
                 contenedor.appendChild(div);
             }
         }
 
-        function mostrarCantos(categoria) {
+        function mostrarCantos(categoria, esquemaSeleccionado) {
             const contenedor = document.getElementById("listaCantos");
-            contenedor.innerHTML = "";
+            contenedor.innerHTML = "<h2>Cantos Disponibles</h2>";
             contenedor.style.display = "block";
-            
-            cantos[categoria].forEach(canto => {
+
+            cantosEsquemas[esquemaSeleccionado][categoria].forEach(canto => {
                 let div = document.createElement("div");
                 div.classList.add("canto-item");
                 div.innerHTML = `<p>${canto.titulo}</p>`;
@@ -241,57 +228,70 @@
         }
 
         function agregarCanto(categoria, canto) {
-            esquema = esquema.filter(item => item.categoria !== categoria);
-            esquema.push({ categoria, imgs: canto.imgs });
-            actualizarEsquema();
-        }
-
-        function quitarCanto(categoria) {
-            esquema = esquema.filter(canto => canto.categoria !== categoria);
+            cantosSeleccionados.push({ categoria, titulo: canto.titulo, imgs: canto.imgs });
             actualizarEsquema();
         }
 
         function actualizarEsquema() {
             const contenedor = document.getElementById("esquemaCantos");
-            contenedor.innerHTML = "";
+            contenedor.innerHTML = "<h2>Esquema de Cantos</h2>";
             
-            if (esquema.length === 0) {
-                contenedor.innerHTML = '<p>No has seleccionado ningún canto.</p>';
+            if (cantosSeleccionados.length === 0) {
+                contenedor.innerHTML += '<p>No has seleccionado ningún canto.</p>';
                 return;
             }
             
-            esquema.forEach(canto => {
+            cantosSeleccionados.forEach(canto => {
                 const div = document.createElement("div");
-                div.innerHTML = `<p>${canto.categoria}</p> <span class='remove-btn' onclick="quitarCanto('${canto.categoria}')">❌</span>`;
+                div.innerHTML = `<p>${canto.categoria}: ${canto.titulo} <span class='remove-btn' onclick="quitarCanto('${canto.titulo}')">❌</span></p>`;
                 contenedor.appendChild(div);
             });
         }
 
+        function quitarCanto(titulo) {
+            cantosSeleccionados = cantosSeleccionados.filter(canto => canto.titulo !== titulo);
+            actualizarEsquema();
+        }
+
+        let imagenesActuales = [];
+        let indiceImagen = 0;
+
         function generarCancionero() {
-            if (esquema.length === 0) {
+            if (cantosSeleccionados.length === 0) {
                 alert("No has seleccionado ningún canto.");
                 return;
             }
-            imagenesActuales = esquema.flatMap(canto => canto.imgs);
-            indiceImagen = 0;
-            mostrarImagen();
-            document.getElementById("overlay").style.display = "flex";
+
+            imagenesActuales = [];
+            cantosSeleccionados.forEach(canto => {
+                if (canto.imgs) {
+                    imagenesActuales.push(...canto.imgs);
+                }
+            });
+
+            if (imagenesActuales.length > 0) {
+                mostrarImagen(imagenesActuales[indiceImagen]);
+                document.getElementById("overlay").style.display = "flex";
+            }
         }
 
-        function mostrarImagen() {
-            document.getElementById("imagenActual").src = imagenesActuales[indiceImagen];
+        function mostrarImagen(imagen) {
+            document.getElementById("imagenActual").src = imagen;
         }
 
         function cambiarImagen(direccion) {
-            indiceImagen = (indiceImagen + direccion + imagenesActuales.length) % imagenesActuales.length;
-            mostrarImagen();
+            indiceImagen += direccion;
+            if (indiceImagen < 0) {
+                indiceImagen = imagenesActuales.length - 1;
+            } else if (indiceImagen >= imagenesActuales.length) {
+                indiceImagen = 0;
+            }
+            mostrarImagen(imagenesActuales[indiceImagen]);
         }
 
         function cerrarCancionero() {
             document.getElementById("overlay").style.display = "none";
         }
-
-        cargarCategorias();
     </script>
 </body>
 </html>
