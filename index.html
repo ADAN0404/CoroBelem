@@ -84,15 +84,21 @@
             max-height: 100%;
             margin: 10px;
         }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: red;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
         @media (max-width: 768px) {
             .container { max-width: 90%; }
             .menu { flex-direction: column; text-align: center; }
             .menu img { margin-bottom: 10px; }
-        }
-        @media (pointer: coarse) {
-            .nav-btn {
-                display: none;
-            }
         }
     </style>
 </head>
@@ -106,7 +112,7 @@
         <select id="esquemaSelect" onchange="cargarCategorias()">
             <option value="Ordinario">Ordinario</option>
             <option value="Cuaresma">Cuaresma</option>
-            <option value="Pascua">Pascua</option>
+            <option value="Cuaresma">Pascua</option>
         </select>
     </div>
 
@@ -126,23 +132,134 @@
     <div class="container">
         <button onclick="generarCancionero()">Generar Cancionero</button>
     </div>
-
+    
+    <!-- Subcapa del cancionero 
     <div class="overlay" id="overlay">
         <div class="close-btn" onclick="cerrarCancionero()">✖</div>
         <div class="nav-btn prev-btn" onclick="cambiarImagen(-1)">⬅</div>
         <img id="imagenActual" src="">
         <div class="nav-btn next-btn" onclick="cambiarImagen(1)">➡</div>
-    </div>
+    </div>-->
 
     <script>
-        let cantosSeleccionados = [];
-        let imagenesActuales = [];
-        let indiceImagen = 0;
+        let cantosEsquemas = {
+            "Ordinario": {
+                "Entrada": [
+                { titulo: "Portones - Xavier Gonzalez", imgs: ["Entrada/Portones - Xavier.jpg"] },
+                { titulo: "Reunidos - Francisco Palazón", imgs: ["Entrada/Reunidos_1.jpg", "Entrada/Reunidos_2.jpg", "Entrada/Reunidos_3.jpg"] },
+                { titulo: "Un solo señor - Lucien Deiss", imgs: ["Entrada/Un solo_1.jpg","Entrada/Un solo_2.jpg"] },
+                { titulo: "Juntos como hermanos - Cesáreo Gabaráin", imgs: ["Entrada/juntos.jpg"] },
+                { titulo: "Pueblo de reyes - Lucien Deiss", imgs: ["Entrada/Pueblo2.jpg","Entrada/Pueblo1.jpg"] },
+                { titulo: "Venimos hoy a tu altar - Bravo", imgs: ["Entrada/venimoshoy.jpg"] },
+                { titulo: "Hacia ti, morada santa - Kiko Argüello", imgs: ["Entrada/moradasanta.jpg"] },
+                { titulo: "Dios nos convoca", imgs: ["Entrada/dios.jpg"] }
+            ],
+            "Ten Piedad": [
+                { titulo: "Señor ten piedad Xavier Gonzalez", imgs: ["Ten piedad/Señor ten piedad - Xavier 1.jpg", "Ten piedad/Señor ten piedad - Xavier 2.jpg"] },
+                { titulo: "Señor ten piedad Palazón", imgs: ["Ten piedad/Señor ten piedad - Palazon.jpg"] }
+            ],
+            "Gloria": [
+                { titulo: "Gloria Benjamín Rangel - Misa Guadalupana", imgs: ["Gloria/Gloria Benja1.jpg","Gloria/Gloria Benja2.jpg","Gloria/Gloria Benja3.jpg","Gloria/Gloria Benja4.jpg"] },
+                { titulo: "Gloria Pbro. Lic. Ricardo Ignacio", imgs: ["Gloria/GloriaRicardo1.jpg", "Gloria/GloriaRicardo2.jpg", "Gloria/GloriaRicardo3.jpg", "Gloria/GloriaRicardo4.jpg", "Gloria/GloriaRicardo5.jpg"
+                                                                     , "Gloria/GloriaRicardo6.jpg", "Gloria/GloriaRicardo7.jpg"] },
+                { titulo: "Gloria Benigna Carrillo - Buen Pastor", imgs: ["Gloria/GloriaBenigna1.jpg", "Gloria/GloriaBenigna2.jpg"] },
+                { titulo: "Gloria A. Mejía - Melodica", imgs: ["Gloria/GloriaMejiaMelodica1.jpg", "Gloria/GloriaMejiaMelodica2.jpg","Gloria/GloriaMejiaMelodica3.jpg","Gloria/GloriaMejiaMelodica4.jpg",
+                                                              "Gloria/GloriaMejiaMelodica5.jpg",] },
+                { titulo: "Gloria A. Mejía - Rítmica", imgs: ["Gloria/GloriaMejiaRitmica1.jpg", "Gloria/GloriaMejiaRitmica2.jpg"] },
+                { titulo: "Gloria Palazón", imgs: ["Gloria/GloriaPalazon1.jpg", "Gloria/GloriaPalazon2.jpg"] },
+                { titulo: "Gloria al señor - Popular", imgs: ["Gloria/Gloria al señor.jpg"] },
+                { titulo: "Gloria Xavier Gonzalez - Señora y niña mía", imgs: ["Gloria/Gloria xavier1.jpg", "Gloria/Gloria xavier2.jpg", "Gloria/Gloria xavier3.jpg",
+                                                                "Gloria/Gloria xavier4.jpg", "Gloria/Gloria xavier5.jpg","Gloria/Gloria xavier6.jpg"]}
+            ],
+            "Aleluya": [
+                { titulo: "Festival Alleluia - James Chepponis", imgs: ["Aleluya/Festival1.jpg","Aleluya/Festival2.jpg","Aleluya/Festival3.jpg","Aleluya/festival4.jpg"] },
+                { titulo: "Aleluya Taizé 4", imgs: ["Aleluya/Aleluya Taizé.jpeg"] },
+                { titulo: "Aleluya Taizé 7", imgs: ["Aleluya/Aleluya Taize 7.jpg"] },
+                { titulo: "Aleluya A. Mejía - Melodica", imgs: ["Aleluya/AleluyaMejiaM1.jpeg","Aleluya/AleluyaMejiaM2.jpeg"] },
+                { titulo: "Aleluya A. Mejía - Rítmica", imgs: ["Aleluya/Aleluya 50.jpeg"] },
+                { titulo: "Aleluya A. Mejía - Coral", imgs: ["Aleluya/M Coral 1.jpeg", "Aleluya/M Coral 2.jpeg"] },
+                { titulo: "Aleluya Benigna Carrillo - Buen Pastor", imgs: ["Aleluya/AleluyaBenigna.jpeg"] },
+                { titulo: "Aleluya Mary Frances", imgs: ["Aleluya/Mary Frances.jpeg"] },
+                { titulo: "Aleluya Jesús B., msp", imgs: ["Aleluya/AleluyaPaz.jpg"] },
+                { titulo: "Aleluya José Netza Pineda - Modal", imgs: ["Aleluya/AleluyaModal.jpg"] },
+                { titulo: "Aleluya  Ordinario", imgs: ["Aleluya/Ordinario.jpeg"] },
+                { titulo: "Canta Aleluya", imgs: ["Aleluya/Canta Aleluya.jpeg"] },
+                { titulo: "Aleluya Varios - 161, 163, 189", imgs: ["Aleluya/A 161, 163, 189.jpeg"] },
+                { titulo: "Aleluya Varios - I y II", imgs: ["Aleluya/Aleluya I y II.jpeg"] }
+                
+            ],
+             "Ofertorio": [
+                { titulo: "Recibe - Delfino Madrigal", imgs: ["Ofertorio/Recibe Delfino.jpg"] },
+                { titulo: "Nos has dado tu vida - Coral atribuido a J. Sebastian Bach", imgs: ["Ofertorio/Nos has.jpg"] },
+                { titulo: "Pan de los trigales - Benjamín Rangel G.", imgs: ["Ofertorio/Pan de los trigales.jpg"] }
+            ],
+             "Santo": [
+                { titulo: "Santo Marco Frisina", imgs: ["Santo/Santo Frisina1.jpg", "Santo/Santo Frisina2.jpg","Santo/Santo Frisina3.jpg"] },
+                { titulo: "Santo Garcia Virgen", imgs: ["Santo/Santo Garcia1.jpg", "Santo/Santo Garcia2.jpg"] },
+                { titulo: "Santo Juan Jauregui", imgs: ["Santo/Santo Jauregui.jpg"] },
+                { titulo: "Santo Mary Frances", imgs: ["Santo/Santo Mary.jpg"] },
+                { titulo: "Santo Alfonso Luna", imgs: ["Santo/Santo Luna1.jpg", "Santo/Santo Luna2.jpg"] },
+                { titulo: "Santo José Netza Pineda - Modal", imgs: ["Santo/Santo Jose.jpg"] },
+                { titulo: "Santo A. Mejía - Melodica", imgs: ["Santo/Santo Mejia Melodica1.jpg","Santo/Santo Mejia Melodica2.jpg"] },
+                { titulo: "Santo A. Mejía - Rítmica", imgs: ["Santo/Santo Mejia Ritmica1.jpg"] },
+                { titulo: "Santo Palazón", imgs: ["Santo/SantoPalazon.jpg","Santo/SantoPalazon2.jpg","Santo/SantoPalazon3.jpg"] },
+                { titulo: "Santo Benigna Carrillo - Buen pastor", imgs: ["Santo/Santo Benigna.jpg"] }
+            ],
+             "Cordero": [
+                { titulo: "Cordero Marco Frisina", imgs: ["Cordero/CorderoFrisina1.jpg", "Cordero/CorderoFrisina2.jpg","Cordero/CorderoFrisina3.jpg"] },
+                { titulo: "Cordero Benigna Carrillo - Buen pastor", imgs: ["Cordero/Buen Pastor.jpeg"] },
+                { titulo: "Cordero J. A. Espinosa", imgs: ["Cordero/CorderoEspinosa.jpg"] },
+                { titulo: "Cordero Julián A. López - Verbo encarnado", imgs: ["Cordero/CorderoJulian.jpg"] },
+                { titulo: "Cordero A. Mejía - Melodica", imgs: ["Cordero/CorderoMejiaM1.jpeg","Cordero/CorderoMejiaM2.jpeg"] },
+                { titulo: "CorderoA. Mejía - Rítmica", imgs: ["Cordero/CorderoMejiaR.jpg"] },
+                { titulo: "Cordero José Netza Pineda - Modal", imgs: ["Cordero/CorderoModal.jpeg"] },
+                { titulo: "Cordero Palazón", imgs: ["Cordero/CorderoPalazon.jpg","Cordero/CorderoPalazon2.jpg"] },
+                { titulo: "Cordero Mary Frances", imgs: ["Cordero/Mary Frances 1.1.jpeg","Cordero/Mary Frances 1.2.jpeg"] },
+                { titulo: "Cordero Mary Frances - Lamb of God", imgs: ["Cordero/Mary Frances 2.jpeg"] },
+                { titulo: "Cordero Luis E., msp", imgs: ["Cordero/Paz y Perdón.jpeg"] }
+            ],
+            "Comunión": [
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ],
+            "Himnos": [
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ]
+            
+            
+        },
+            "Cuaresma": {
+                "Entrada": [
+                    { titulo: "Desde lo hondo", imgs: ["EntradaCuaresma/Desde1.jpg","EntradaCuaresma/Desde2.jpg"] }
+                ],
+                "Honor y Gloria": [
+                    { titulo: "Honor y gloria - Arre. Gabriel Frausto Z.", imgs: ["Honor/Honor.jpg"] },
+                    { titulo: "Honor y gloria - Adán Hernández L.", imgs: ["Honor/Honor Adan1.jpg", "Honor/Honor Adan1.jpg"] }
+                ],
+                "Comunión": [
+                    { titulo: "Si alguno me quiere seguir", imgs: ["ComunionCuaresma/SI ALGUNO 1.jpg", "ComunionCuaresma/SI ALGUNO 2.jpg"] }
+                ]
+            },
+            "Pascua": {
+                "Entrada": [
+                    { titulo: "Desde lo hondo", imgs: ["EntradaCuaresma/Desde1.jpg","EntradaCuaresma/Desde2.jpg"] }
+                ],
+                "Honor y Gloria": [
+                    { titulo: "Honor y gloria - Arre. Gabriel Frausto Z.", imgs: ["Honor/Honor.jpg"] },
+                    { titulo: "Honor y gloria - Adán Hernández L.", imgs: ["Honor/Honor Adan1.jpg", "Honor/Honor Adan1.jpg"] }
+                ],
+                "Comunión": [
+                    { titulo: "Si alguno me quiere seguir", imgs: ["ComunionCuaresma/SI ALGUNO 1.jpg", "ComunionCuaresma/SI ALGUNO 2.jpg"] }
+                ]
+            }
+        };
+
+       let cantosSeleccionados = [];
 
         function cargarCategorias() {
             let esquemaSeleccionado = document.getElementById("esquemaSelect").value;
             const contenedor = document.getElementById("listaCategorias");
             contenedor.innerHTML = "<h2>Categorías</h2>";
+
             for (let categoria in cantosEsquemas[esquemaSeleccionado]) {
                 let div = document.createElement("div");
                 div.classList.add("canto-item");
@@ -156,6 +273,7 @@
             const contenedor = document.getElementById("listaCantos");
             contenedor.innerHTML = "<h2>Cantos Disponibles</h2>";
             contenedor.style.display = "block";
+
             cantosEsquemas[esquemaSeleccionado][categoria].forEach(canto => {
                 let div = document.createElement("div");
                 div.classList.add("canto-item");
@@ -173,10 +291,12 @@
         function actualizarEsquema() {
             const contenedor = document.getElementById("esquemaCantos");
             contenedor.innerHTML = "<h2>Esquema de Cantos</h2>";
+
             if (cantosSeleccionados.length === 0) {
                 contenedor.innerHTML += '<p>No has seleccionado ningún canto.</p>';
                 return;
             }
+
             cantosSeleccionados.forEach(canto => {
                 const div = document.createElement("div");
                 div.innerHTML = `<p>${canto.categoria}: ${canto.titulo} <span class='remove-btn' onclick="quitarCanto('${canto.titulo}')">❌</span></p>`;
@@ -189,17 +309,22 @@
             actualizarEsquema();
         }
 
+        let imagenesActuales = [];
+        let indiceImagen = 0;
+
         function generarCancionero() {
             if (cantosSeleccionados.length === 0) {
                 alert("No has seleccionado ningún canto.");
                 return;
             }
+
             imagenesActuales = [];
             cantosSeleccionados.forEach(canto => {
                 if (canto.imgs) {
                     imagenesActuales.push(...canto.imgs);
                 }
             });
+
             if (imagenesActuales.length > 0) {
                 indiceImagen = 0;
                 mostrarImagen(imagenesActuales[indiceImagen]);
@@ -225,28 +350,29 @@
             document.getElementById("overlay").style.display = "none";
         }
 
-        // === NUEVO: Soporte para deslizar (swipe) ===
+        // === NUEVO: Soporte para deslizamiento táctil (swipe) ===
         let touchStartX = 0;
         let touchEndX = 0;
 
-        const imagenActual = document.getElementById("imagenActual");
+        const imagen = document.getElementById("imagenActual");
 
-        imagenActual.addEventListener('touchstart', function (e) {
+        imagen.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
-        }, false);
+        });
 
-        imagenActual.addEventListener('touchend', function (e) {
+        imagen.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
-            handleGesture();
-        }, false);
+            handleSwipeGesture();
+        });
 
-        function handleGesture() {
-            const swipeThreshold = 50;
-            if (touchEndX < touchStartX - swipeThreshold) {
-                cambiarImagen(1);
-            }
-            if (touchEndX > touchStartX + swipeThreshold) {
-                cambiarImagen(-1);
+        function handleSwipeGesture() {
+            const deltaX = touchEndX - touchStartX;
+            const umbral = 50; // píxeles necesarios para reconocer swipe
+
+            if (deltaX > umbral) {
+                cambiarImagen(-1); // derecha
+            } else if (deltaX < -umbral) {
+                cambiarImagen(1); // izquierda
             }
         }
     </script>
