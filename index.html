@@ -141,25 +141,15 @@
     </div>
     
     <!-- Subcapa del cancionero -->
-    <div class="overlay" id="overlay">
-        
-        
-        <div class="close-btn" onclick="cerrarCancionero()">✖</div>
-        <div class="nav-btn prev-btn" onclick="cambiarImagen(-1)">⬅</div>
-        <img id="imagenActual" src="" >
-        <div class="nav-btn next-btn" onclick="cambiarImagen(1)">➡</div>
+   <div class="overlay" id="overlay">
+    <div class="close-btn" onclick="cerrarCancionero()">✖</div>
+    <div class="nav-btn prev-btn" onclick="cambiarImagen(-1)">⬅</div>
+    
+    <img id="imagenActual" src="">
+    
+    <div class="nav-btn next-btn" onclick="cambiarImagen(1)">➡</div>
+</div>
 
-        <button onclick="activarEdicion()" id="btnEditar"
-            style="position: absolute; top: 60px; left: 20px; padding: 10px; background: orange; color: white; border: none; border-radius: 10px;">
-                ✍️ Editar
-        </button>
-        <button onclick="toggleDibujo()" id="btnDibujo"
-            style="position: absolute; bottom: 20px; left: 20px; padding: 10px; background: #2196F3; color: white; border: none; border-radius: 10px;">
-                ✏️ Activar Dibujo
-        </button>
-        <canvas id="canvasDibujo" style="position: absolute; touch-action: none;"></canvas>
-        <button onclick="ctx.clearRect(0, 0, canvas.width, canvas.height)" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; background: #c11717; color: white; border: none; border-radius: 10px;">🧹 Limpiar</button>
-    </div>
 
     
 <script>
