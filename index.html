@@ -16,51 +16,53 @@ body{
     margin:0;
 }
 
-.menu{
+..menu{
     background:rgba(0,0,0,.6);
-    padding:15px;
+    padding:10px;
     position:fixed;
     width:100%;
     top:0;
     z-index:1000;
 }
 
-.menu img{ height:120px }
+.menu img{ height:200px }
 
 .container{
     max-width:600px;
-    margin:190px auto 20px;
-    padding:20px;
+    margin:20px auto;
+    padding:30px;
     background:rgba(0,0,0,.6);
-    border-radius:12px;
+    border-radius:10px;
 }
 
 select,.canto-item,button{
     width:100%;
-    padding:12px;
+    padding:10px;
     margin:10px 0;
     background:#444;
     color:white;
     border:none;
-    border-radius:6px;
+    border-radius:5px;
     cursor:pointer;
-    font-size:16px;
 }
 
 .canto-item:hover,button:hover{ background:#666 }
 
 .selected-cantos div{
     background:#333;
-    padding:10px;
-    margin-top:6px;
-    border-radius:6px;
+    padding:20px;
+    margin-top:5px;
+    border-radius:5px;
 }
 
 .remove-btn{ cursor:pointer;margin-left:10px }
 
 .overlay{
     position:fixed;
-    inset:0;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
     background:black;
     display:none;
     align-items:center;
@@ -91,7 +93,7 @@ select,.canto-item,button{
 
 <div class="menu">
     <img src="Logo.png" alt="Coro Belém">
-    <h2>Selecciona tiempo litúrgico</h2>
+    <h1>Selecciona tiempo litúrgico</h1>
 </div>
 
 <div class="container">
@@ -104,16 +106,16 @@ select,.canto-item,button{
 </div>
 
 <div class="container" id="listaCategorias">
-    <h3>Categorías</h3>
+    <h2>Categorías</h2>
 </div>
 
 <div class="container" id="listaCantos" style="display:none">
-    <h3>Cantos disponibles</h3>
+    <h2>Cantos disponibles</h2>
 </div>
 
 <div class="container selected-cantos" id="esquemaCantos">
-    <h3>Esquema de cantos</h3>
-    <p>No has seleccionado cantos.</p>
+    <h2>Esquema de cantos</h2>
+    <p>No has seleccionado ningún canto.</p>
 </div>
 
 <div class="container">
@@ -127,9 +129,7 @@ select,.canto-item,button{
 </div>
 
 <script>
-/* ===== DATOS ===== */
 const cantosEsquemas={
-        let cantosEsquemas = {
             "Ordinario": {
                 "Entrada": [
                 { titulo: "Portones - Xavier Gonzalez", imgs: ["Entrada/Portones - Xavier.jpg"] },
@@ -242,12 +242,11 @@ const cantosEsquemas={
 
 let seleccionados=[],imagenes=[],indice=0;
 
-/* ===== LÓGICA ===== */
 function cargarCategorias(){
     const esquema=esquemaSelect.value;
     if(!esquema) return;
 
-    listaCategorias.innerHTML="<h3>Categorías</h3>";
+    listaCategorias.innerHTML="<h2>Categorías</h2>";
     listaCantos.style.display="none";
 
     for(const cat in cantosEsquemas[esquema]){
@@ -260,7 +259,7 @@ function cargarCategorias(){
 }
 
 function mostrarCantos(cat,esq){
-    listaCantos.innerHTML="<h3>Cantos disponibles</h3>";
+    listaCantos.innerHTML="<h2>Cantos disponibles</h2>";
     listaCantos.style.display="block";
 
     cantosEsquemas[esq][cat].forEach(c=>{
@@ -273,9 +272,9 @@ function mostrarCantos(cat,esq){
 }
 
 function actualizar(){
-    esquemaCantos.innerHTML="<h3>Esquema de cantos</h3>";
+    esquemaCantos.innerHTML="<h2>Esquema de cantos</h2>";
     if(!seleccionados.length){
-        esquemaCantos.innerHTML+="<p>No has seleccionado cantos.</p>";
+        esquemaCantos.innerHTML+="<p>No has seleccionado ningún canto.</p>";
         return;
     }
     seleccionados.forEach(c=>{
@@ -313,25 +312,18 @@ function cerrarCancionero(){
     overlay.style.display="none";
 }
 
-/* ===== SWIPE ===== */
+/* SWIPE */
 let startX=0;
 imagenActual.addEventListener("touchstart",e=>{
     startX=e.touches[0].clientX;
 });
-
 imagenActual.addEventListener("touchend",e=>{
     const dx=e.changedTouches[0].clientX-startX;
-    if(dx>50){
-        indice=(indice-1+imagenes.length)%imagenes.length;
-        mostrarImagen();
-    }
-    if(dx<-50){
-        indice=(indice+1)%imagenes.length;
-        mostrarImagen();
-    }
+    if(dx>50){ indice=(indice-1+imagenes.length)%imagenes.length; mostrarImagen(); }
+    if(dx<-50){ indice=(indice+1)%imagenes.length; mostrarImagen(); }
 });
 
-/* ===== ZOOM ===== */
+/* ZOOM */
 let scale=1;
 imagenActual.addEventListener("wheel",e=>{
     e.preventDefault();
