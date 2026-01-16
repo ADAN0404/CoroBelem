@@ -331,6 +331,14 @@ imagenActual.addEventListener("wheel",e=>{
     scale=Math.min(Math.max(1,scale),5);
     imagenActual.style.transform=`scale(${scale})`;
 },{passive:false});
+
+window.addEventListener("beforeunload", function (e) {
+    if (seleccionados.length > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+    }
+});
+
 </script>
 
 </body>
