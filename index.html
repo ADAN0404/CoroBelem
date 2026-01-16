@@ -1,228 +1,134 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coro Belém</title>
-    <link rel="icon" type="image/x-icon" href="Logo.png" />
-    <style>
-        body {
-            font-family: 'Times New Roman', serif;
-            text-align: center;
-            background: url('fondo.jfif') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-        ..menu {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .menu img { height: 200px; margin-right: 20px; }
-        .container {
-            max-width: 600px;
-            margin: 20px auto 20px;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.2);
-        }
-        select, .canto-item{
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            background: #444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button {
-            margin: 10px 0;
-            padding: 10px;
-            background: #444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .canto-item:hover, button:hover { background: #666; }
-        .selected-cantos div {
-            padding: 20px;
-            background: #333;
-            border-radius: 5px;
-            margin-top: 5px;
-        }
-        .remove-btn { color: white; cursor: pointer; margin-left: 10px; }
-        .close-btn, .nav-btn {
-            position: absolute;
-            top: 20px;
-            background: transparent; /* Fondo transparente */
-            color: white;             /* Color del ícono */
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 22px;  /* Puedes ajustar el tamaño si lo deseas */
-            border: none;             /* Sin borde */
-        }
-        .close-btn { right: 20px; }
-        .nav-btn { 
-            background: transparent;
-            color: white;
-        }
-        .nav-btn:hover, .close-btn:hover {
-            color: #c11717; 
-            transform: scale(1.2); /* Aumenta ligeramente su tamaño */
-            transition: 0.3s;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>Coro Belém</title>
+<link rel="icon" href="Logo.png">
+
+<style>
+body{
+    font-family:'Times New Roman',serif;
+    background:url('fondo.jfif') no-repeat center center fixed;
+    background-size:cover;
+    color:white;
+    text-align:center;
+    margin:0;
 }
-        .prev-btn { left: 20px; }
-        .next-btn { right: 70px; }
-        .overlay img {
-            max-width: 100%;
-            max-height: 100%;
-            margin: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            .container { max-width: 90%; }
-            .menu { flex-direction: column; text-align: center; }
-            .menu img { margin-bottom: 10px; }
-        }
-    </style>
+
+.menu{
+    background:rgba(0,0,0,.6);
+    padding:15px;
+    position:fixed;
+    width:100%;
+    top:0;
+    z-index:1000;
+}
+
+.menu img{ height:120px }
+
+.container{
+    max-width:600px;
+    margin:190px auto 20px;
+    padding:20px;
+    background:rgba(0,0,0,.6);
+    border-radius:12px;
+}
+
+select,.canto-item,button{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    background:#444;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.canto-item:hover,button:hover{ background:#666 }
+
+.selected-cantos div{
+    background:#333;
+    padding:10px;
+    margin-top:6px;
+    border-radius:6px;
+}
+
+.remove-btn{ cursor:pointer;margin-left:10px }
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    overflow:hidden;
+}
+
+.overlay img{
+    max-width:100%;
+    max-height:100%;
+    transform-origin:center center;
+    transition:transform .2s ease;
+}
+
+.close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    font-size:26px;
+    cursor:pointer;
+    z-index:3000;
+}
+</style>
 </head>
+
 <body>
-    <div class="menu">
-        <img src="Logo.png" alt="Logo">
-        <h1>Selecciona un esquema</h1>
-    </div>
 
-    <div class="container">
-        <select id="esquemaSelect" onchange="cargarCategorias()">
-            <option value="Ordinario">Ordinario</option>
-            <option value="Cuaresma">Cuaresma</option>
-            <option value="Cuaresma">Pascua</option>
-        </select>
-    </div>
-
-    <div class="container" id="listaCategorias">
-        <h2>Categorías</h2>
-    </div>
-    <div class="container" id="listaCantos" style="display: none;">
-        <h2>Cantos Disponibles</h2>
-    </div>
-
-    <div class="container selected-cantos" id="esquemaCantos">
-        <h2>Esquema de Cantos</h2>
-        <p>No has seleccionado ningún canto.</p>
-    </div>
-
-    <div class="container">
-        <button onclick="generarCancionero()">Generar Cancionero</button>
-    </div>
-    
-    <!-- Subcapa del cancionero -->
-   <div class="overlay" id="overlay">
-    <div class="close-btn" onclick="cerrarCancionero()">✖</div>
-    <div class="nav-btn prev-btn" onclick="cambiarImagen(-1)">⬅</div>
-    
-    <img id="imagenActual" src="">
-    
-    <div class="nav-btn next-btn" onclick="cambiarImagen(1)">➡</div>
+<div class="menu">
+    <img src="Logo.png" alt="Coro Belém">
+    <h2>Selecciona tiempo litúrgico</h2>
 </div>
 
+<div class="container">
+    <select id="esquemaSelect" onchange="cargarCategorias()">
+        <option value="" disabled selected>Selecciona tiempo litúrgico</option>
+        <option value="Ordinario">Tiempo Ordinario</option>
+        <option value="Cuaresma">Cuaresma</option>
+        <option value="Pascua">Pascua</option>
+    </select>
+</div>
 
-    
+<div class="container" id="listaCategorias">
+    <h3>Categorías</h3>
+</div>
+
+<div class="container" id="listaCantos" style="display:none">
+    <h3>Cantos disponibles</h3>
+</div>
+
+<div class="container selected-cantos" id="esquemaCantos">
+    <h3>Esquema de cantos</h3>
+    <p>No has seleccionado cantos.</p>
+</div>
+
+<div class="container">
+    <button onclick="generarCancionero()">Generar cancionero</button>
+</div>
+
+<!-- VISOR -->
+<div class="overlay" id="overlay">
+    <div class="close-btn" onclick="cerrarCancionero()">✖</div>
+    <img id="imagenActual">
+</div>
+
 <script>
-    const canvas = document.getElementById("canvasDibujo");
-    const img = document.getElementById("imagenActual");
-    const ctx = canvas.getContext("2d");
-    let dibujando = false;
-
-    function ajustarCanvas() {
-        canvas.width = img.clientWidth;
-        canvas.height = img.clientHeight;
-    }
-
-    window.addEventListener("resize", ajustarCanvas);
-    img.onload = ajustarCanvas;
-
-    function comenzarDibujo(e) {
-        dibujando = true;
-        const pos = obtenerPosicion(e);
-        ctx.beginPath();
-        ctx.moveTo(pos.x, pos.y);
-    }
-
-    function dibujar(e) {
-        if (!dibujando) return;
-        const pos = obtenerPosicion(e);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.stroke();
-    }
-
-    function terminarDibujo() {
-        dibujando = false;
-        ctx.closePath();
-    }
-
-    function obtenerPosicion(e) {
-        const rect = canvas.getBoundingClientRect();
-        let x, y;
-
-        if (e.touches && e.touches[0]) {
-            x = e.touches[0].clientX - rect.left;
-            y = e.touches[0].clientY - rect.top;
-        } else {
-            x = e.clientX - rect.left;
-            y = e.clientY - rect.top;
-        }
-
-        return { x, y };
-    }
-
-    // Eventos para mouse y táctil/lápiz
-    canvas.addEventListener("mousedown", comenzarDibujo);
-    canvas.addEventListener("mousemove", dibujar);
-    canvas.addEventListener("mouseup", terminarDibujo);
-    canvas.addEventListener("mouseout", terminarDibujo);
-
-    canvas.addEventListener("touchstart", comenzarDibujo);
-    canvas.addEventListener("touchmove", dibujar);
-    canvas.addEventListener("touchend", terminarDibujo);
-
-    // Limpiar el canvas al cambiar de imagen
-    function mostrarImagen(imagen) {
-        img.src = imagen;
-        setTimeout(() => {
-            ajustarCanvas();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }, 100); // tiempo para esperar a que cargue la imagen
-    }
-</script>
-    <script>
+/* ===== DATOS ===== */
+<script>
         let cantosEsquemas = {
             "Ordinario": {
                 "Entrada": [
@@ -334,128 +240,106 @@
             }
         };
 
-       let cantosSeleccionados = [];
+let seleccionados=[],imagenes=[],indice=0;
 
-        function cargarCategorias() {
-            let esquemaSeleccionado = document.getElementById("esquemaSelect").value;
-            const contenedor = document.getElementById("listaCategorias");
-            contenedor.innerHTML = "<h2>Categorías</h2>";
+/* ===== LÓGICA ===== */
+function cargarCategorias(){
+    const esquema=esquemaSelect.value;
+    if(!esquema) return;
 
-            for (let categoria in cantosEsquemas[esquemaSeleccionado]) {
-                let div = document.createElement("div");
-                div.classList.add("canto-item");
-                div.innerText = categoria;
-                div.onclick = () => mostrarCantos(categoria, esquemaSeleccionado);
-                contenedor.appendChild(div);
-            }
-        }
+    listaCategorias.innerHTML="<h3>Categorías</h3>";
+    listaCantos.style.display="none";
 
-        function mostrarCantos(categoria, esquemaSeleccionado) {
-            const contenedor = document.getElementById("listaCantos");
-            contenedor.innerHTML = "<h2>Cantos Disponibles</h2>";
-            contenedor.style.display = "block";
+    for(const cat in cantosEsquemas[esquema]){
+        const d=document.createElement("div");
+        d.className="canto-item";
+        d.textContent=cat;
+        d.onclick=()=>mostrarCantos(cat,esquema);
+        listaCategorias.appendChild(d);
+    }
+}
 
-            cantosEsquemas[esquemaSeleccionado][categoria].forEach(canto => {
-                let div = document.createElement("div");
-                div.classList.add("canto-item");
-                div.innerHTML = `<p>${canto.titulo}</p>`;
-                div.onclick = () => agregarCanto(categoria, canto);
-                contenedor.appendChild(div);
-            });
-        }
+function mostrarCantos(cat,esq){
+    listaCantos.innerHTML="<h3>Cantos disponibles</h3>";
+    listaCantos.style.display="block";
 
-        function agregarCanto(categoria, canto) {
-            cantosSeleccionados.push({ categoria, titulo: canto.titulo, imgs: canto.imgs });
-            actualizarEsquema();
-        }
+    cantosEsquemas[esq][cat].forEach(c=>{
+        const d=document.createElement("div");
+        d.className="canto-item";
+        d.textContent=c.titulo;
+        d.onclick=()=>{ seleccionados.push(c); actualizar(); };
+        listaCantos.appendChild(d);
+    });
+}
 
-        function actualizarEsquema() {
-            const contenedor = document.getElementById("esquemaCantos");
-            contenedor.innerHTML = "<h2>Esquema de Cantos</h2>";
+function actualizar(){
+    esquemaCantos.innerHTML="<h3>Esquema de cantos</h3>";
+    if(!seleccionados.length){
+        esquemaCantos.innerHTML+="<p>No has seleccionado cantos.</p>";
+        return;
+    }
+    seleccionados.forEach(c=>{
+        esquemaCantos.innerHTML+=`
+        <div>${c.titulo}
+            <span class="remove-btn" onclick="quitar('${c.titulo}')">❌</span>
+        </div>`;
+    });
+}
 
-            if (cantosSeleccionados.length === 0) {
-                contenedor.innerHTML += '<p>No has seleccionado ningún canto.</p>';
-                return;
-            }
+function quitar(t){
+    seleccionados=seleccionados.filter(c=>c.titulo!==t);
+    actualizar();
+}
 
-            cantosSeleccionados.forEach(canto => {
-                const div = document.createElement("div");
-                div.innerHTML = `<p>${canto.categoria}: ${canto.titulo} <span class='remove-btn' onclick="quitarCanto('${canto.titulo}')">❌</span></p>`;
-                contenedor.appendChild(div);
-            });
-        }
+function generarCancionero(){
+    imagenes=[];
+    seleccionados.forEach(c=>imagenes.push(...c.imgs));
+    if(!imagenes.length){
+        alert("No hay imágenes para mostrar");
+        return;
+    }
+    indice=0;
+    mostrarImagen();
+    overlay.style.display="flex";
+}
 
-        function quitarCanto(titulo) {
-            cantosSeleccionados = cantosSeleccionados.filter(canto => canto.titulo !== titulo);
-            actualizarEsquema();
-        }
+function mostrarImagen(){
+    imagenActual.style.transform="scale(1)";
+    scale=1;
+    imagenActual.src=imagenes[indice];
+}
 
-        let imagenesActuales = [];
-        let indiceImagen = 0;
+function cerrarCancionero(){
+    overlay.style.display="none";
+}
 
-        function generarCancionero() {
-            if (cantosSeleccionados.length === 0) {
-                alert("No has seleccionado ningún canto.");
-                return;
-            }
+/* ===== SWIPE ===== */
+let startX=0;
+imagenActual.addEventListener("touchstart",e=>{
+    startX=e.touches[0].clientX;
+});
 
-            imagenesActuales = [];
-            cantosSeleccionados.forEach(canto => {
-                if (canto.imgs) {
-                    imagenesActuales.push(...canto.imgs);
-                }
-            });
+imagenActual.addEventListener("touchend",e=>{
+    const dx=e.changedTouches[0].clientX-startX;
+    if(dx>50){
+        indice=(indice-1+imagenes.length)%imagenes.length;
+        mostrarImagen();
+    }
+    if(dx<-50){
+        indice=(indice+1)%imagenes.length;
+        mostrarImagen();
+    }
+});
 
-            if (imagenesActuales.length > 0) {
-                indiceImagen = 0;
-                mostrarImagen(imagenesActuales[indiceImagen]);
-                document.getElementById("overlay").style.display = "flex";
-            }
-        }
+/* ===== ZOOM ===== */
+let scale=1;
+imagenActual.addEventListener("wheel",e=>{
+    e.preventDefault();
+    scale+=e.deltaY*-0.001;
+    scale=Math.min(Math.max(1,scale),5);
+    imagenActual.style.transform=`scale(${scale})`;
+},{passive:false});
+</script>
 
-        function mostrarImagen(imagen) {
-            document.getElementById("imagenActual").src = imagen;
-        }
-
-        function cambiarImagen(direccion) {
-            indiceImagen += direccion;
-            if (indiceImagen < 0) {
-                indiceImagen = imagenesActuales.length - 1;
-            } else if (indiceImagen >= imagenesActuales.length) {
-                indiceImagen = 0;
-            }
-            mostrarImagen(imagenesActuales[indiceImagen]);
-        }
-
-        function cerrarCancionero() {
-            document.getElementById("overlay").style.display = "none";
-        }
-
-        // === NUEVO: Soporte para deslizamiento táctil (swipe) ===
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        const imagen = document.getElementById("imagenActual");
-
-        imagen.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-
-        imagen.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipeGesture();
-        });
-
-        function handleSwipeGesture() {
-            const deltaX = touchEndX - touchStartX;
-            const umbral = 50; // píxeles necesarios para reconocer swipe
-
-            if (deltaX > umbral) {
-                cambiarImagen(-1); // derecha
-            } else if (deltaX < -umbral) {
-                cambiarImagen(1); // izquierda
-            }
-        }
-    </script>
 </body>
 </html>
