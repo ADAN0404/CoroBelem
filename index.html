@@ -27,7 +27,13 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
 .selected-cantos .selected-row{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #c49b534a;padding:14px 0;font-size:14px}.selected-row .num{color:var(--gold);margin-right:13px}
 .remove-btn{background:none;border:1px solid #c5a77c;border-radius:7px;color:#76532f;padding:7px 11px;cursor:pointer;flex-shrink:0}
 .remove-btn:hover{background:#f5e8dc}.empty{color:#766e66;font-size:14px;line-height:1.7}.primary{background:linear-gradient(120deg,#eac989,#bc8845);color:#310d0d;border:0;border-radius:9px;padding:16px 25px;font:700 14px Inter,Arial,sans-serif;cursor:pointer;width:100%;letter-spacing:.03em}.primary:hover{filter:brightness(1.12)}
-.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px}.counter{color:var(--gold);font-size:13px}.overlay{position:fixed;inset:0;z-index:2000;background:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}.overlay img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center;transition:transform .15s ease}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px}.counter{color:var(--gold);font-size:13px}.overlay{position:fixed;inset:0;z-index:2000;background:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}.overlay img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center;transition:transform .15s ease}
+/* En celulares horizontales, lectura a ancho completo con desplazamiento vertical */
+@media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
+.overlay{display:none;align-items:flex-start;justify-content:flex-start;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.overlay img{width:100%;height:auto;max-width:none;max-height:none;object-fit:fill;margin:0 auto}
+.viewer-top{position:fixed}
+}
 .viewer-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85),0 0 9px rgba(0,0,0,.55);padding:10px 16px;z-index:3;font-size:13px;transition:opacity .55s ease,visibility .55s ease}
 .viewer-top button{border:0;background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);border-radius:7px;padding:9px 13px;cursor:pointer}.viewer-top.oculto{opacity:0;visibility:hidden;pointer-events:none}
 
