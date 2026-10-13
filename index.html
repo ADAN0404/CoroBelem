@@ -1,139 +1,56 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>Coro Belém</title>
-<link rel="icon" href="Logo.png">
-
-<style>
-body{
-    font-family:'Times New Roman',serif;
-    background:url('fondo.jfif') no-repeat center center fixed;
-    background-size:cover;
-    color:white;
-    text-align:center;
-    margin:0;
-}
-
-..menu{
-    background:rgba(0,0,0,.6);
-    padding:10px;
-    position:fixed;
-    width:100%;
-    top:0;
-    z-index:1000;
-}
-
-.menu img{ height:200px }
-
-.container{
-    max-width:600px;
-    margin:20px auto;
-    padding:30px;
-    background:rgba(0,0,0,.6);
-    border-radius:10px;
-    text-align: center;
-}
-
-select,.canto-item,button{
-    width:100%;
-    padding:10px;
-    margin:10px 0;
-    background:#444;
-    color:white;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-}
-
-.canto-item:hover,button:hover{ background:#666 }
-
-.selected-cantos div{
-    background:#333;
-    padding:20px;
-    margin-top:5px;
-    border-radius:5px;
-}
-
-.remove-btn{ cursor:pointer;margin-left:10px }
-
-.overlay{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:white; /* ← FONDO BLANCO SOLO EN EL ESQUEMA */
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:2000;
-    overflow:hidden;
-}
-
-.overlay img{
-    max-width:100%;
-    max-height:100%;
-    transform-origin:center center;
-    transition:transform .2s ease;
-}
-
-.close-btn{
-    position:absolute;
-    top:20px;
-    right:20px;
-    font-size:28px;
-    cursor:pointer;
-    z-index:3000;
-    color:red;       /* ← X ROJA */
-    font-weight:bold;
-}
-
-</style>
+<!DOCTYPE html><html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Cancionero | Coro Belém</title><link rel="icon" href="Logo.png">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+:root{--gold:#dfb86c;--wine:#ffffff;--cream:#27211c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#ffffff 0%,#faf8f4 100%);
+color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
+.hero{position:relative;background:#47050a}
+.hero img{display:block;width:100%;height:auto;max-height:530px;object-fit:contain}
+.hero:after{content:'';position:absolute;bottom:0;left:0;right:0;height:28px;background:linear-gradient(transparent,#ffffff)}
+.intro{text-align:center;padding:20px 16px 8px}
+.eyebrow{font-size:11px;letter-spacing:.38em;color:var(--gold);text-transform:uppercase}
+.intro h1{font:600 clamp(27px,5vw,45px) Cinzel,Georgia,serif;margin:12px 0;color:#785425}
+.intro p{color:#665c54;font-size:14px}
+.ornament{color:var(--gold);margin:12px auto 0;letter-spacing:12px}
+.layout{max-width:1160px;margin:20px auto 80px;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.panel{background:#ffffff;border:1px solid rgba(173,137,78,.38);border-radius:16px;padding:26px;box-shadow:0 12px 35px #3d302014}
+.panel h2{font:500 23px Cinzel,Georgia,serif;color:#755020;margin:0 0 18px}
+.panel .sub{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#977038;margin-bottom:12px}.full{grid-column:1/-1}
+.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.canto-item{border:1px solid #8e67455c;background:#fffdf9;color:#302922;border-radius:9px;padding:14px 15px;cursor:pointer;text-align:left;font:500 14px Inter,Arial,sans-serif;transition:.2s;overflow-wrap:anywhere}
+.canto-item:hover,.canto-item:focus-visible{background:#f7edd9;border-color:#e4bb72;outline:none}
+.category-grid .canto-item:before{content:'✧';color:var(--gold);margin-right:10px}
+.song-list{display:grid;gap:9px;max-height:460px;overflow:auto}.song-list .canto-item{display:flex;justify-content:space-between;align-items:center;gap:10px}.song-list .canto-item:after{content:'＋';font-size:21px;color:var(--gold)}select{width:100%;padding:15px 18px;background:#fffdf9;border:1px solid #bd945d;color:#302922;border-radius:9px;font:500 15px Inter,Arial,sans-serif}
+.selected-cantos .selected-row{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #c49b534a;padding:14px 0;font-size:14px}.selected-row .num{color:var(--gold);margin-right:13px}
+.remove-btn{background:none;border:1px solid #c5a77c;border-radius:7px;color:#76532f;padding:7px 11px;cursor:pointer;flex-shrink:0}
+.remove-btn:hover{background:#f5e8dc}.empty{color:#766e66;font-size:14px;line-height:1.7}.primary{background:linear-gradient(120deg,#eac989,#bc8845);color:#310d0d;border:0;border-radius:9px;padding:16px 25px;font:700 14px Inter,Arial,sans-serif;cursor:pointer;width:100%;letter-spacing:.03em}.primary:hover{filter:brightness(1.12)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px}.counter{color:var(--gold);font-size:13px}.overlay{position:fixed;inset:0;z-index:2000;background:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}.overlay img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center;transition:transform .15s ease}
+.viewer-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;background:#26090ee8;color:#fff;padding:10px 16px;z-index:3;font-size:13px}
+.viewer-top button,.nav-arrow{border:1px solid #d5b77c;background:#320b13;color:#fff4e2;border-radius:7px;padding:9px 13px;cursor:pointer}
+.nav-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;font-size:25px}
+.prev{left:8px}.next{right:8px}.footer{text-align:center;color:#8c765c;font-size:12px;padding:0 15px 32px}
+.hidden{display:none!important}@media(max-width:720px){.layout{grid-template-columns:1fr;padding:0 13px;gap:14px;margin-top:10px}
+.panel{padding:20px}.hero img{min-height:160px;object-fit:cover;object-position:center}.intro{padding-top:12px}
+.category-grid{grid-template-columns:1fr 1fr}.panel h2{font-size:20px}.nav-arrow{padding:7px}}</style>
 </head>
-
 <body>
-
-<div class="menu">
-    <img src="Logo.png" alt="Coro Belém">
-    <h1>Selecciona esquema</h1>
-</div>
-
-<div class="container">
-    <select id="esquemaSelect" onchange="cargarCategorias()">
-        <option value="" disabled selected>Tiempo litúrgico</option>
-        <option value="Ordinario">Tiempo Ordinario</option>
-        <option value="Cuaresma">Cuaresma</option>
-        <option value="Pascua">Pascua</option>
-    </select>
-</div>
-
-<div class="container" id="listaCategorias">
-    <h2>Categorías</h2>
-</div>
-
-<div class="container" id="listaCantos" style="display:none">
-    <h2>Cantos disponibles</h2>
-</div>
-
-<div class="container selected-cantos" id="esquemaCantos">
-    <h2>Esquema de cantos</h2>
-    <p>No has seleccionado ningún canto.</p>
-</div>
-
-<div class="container">
-    <button onclick="generarCancionero()">Generar cancionero</button>
-</div>
-
-<!-- VISOR -->
-<div class="overlay" id="overlay">
-    <div class="close-btn" onclick="cerrarCancionero()">✖</div>
-    <img id="imagenActual">
-</div>
-
-<script>
-const cantosEsquemas={
+    <header class="hero"><img src="cabecera-belem.png" alt="Ángeles músicos y escudo del Coro Belém"></header>
+    <section class="intro"><div class="eyebrow">Música sacra · Repertorio litúrgico</div><h1>Cancionero Belém</h1><p>Prepara el esquema musical de cada celebración</p><div class="ornament">✦ ❧ ✦</div></section>
+    <main class="layout"><section class="panel full">
+        <div class="sub">01 · Celebración</div><h2>Tiempo litúrgico</h2><select id="esquemaSelect" onchange="cargarCategorias()"><option value="" disabled selected>Selecciona un tiempo litúrgico</option>
+            <option value="Ordinario">Tiempo Ordinario</option>
+            <option value="Cuaresma">Cuaresma</option><option value="Pascua">Pascua</option></select></section><section class="panel" id="listaCategorias"><div class="sub">02 · Repertorio</div><h2>Categorías</h2><p class="empty">Selecciona primero un tiempo litúrgico.</p></section><section class="panel" id="listaCantos">
+                <div class="sub">03 · Selección</div><h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p></section>
+                <section class="panel full selected-cantos" id="esquemaCantos">
+                    <div class="sub">04 · Tu celebración</div><div class="toolbar"><h2>Esquema de cantos</h2>
+                        <span class="counter" id="count">0 cantos</span></div><p class="empty">No has seleccionado ningún canto.</p></section><section class="full"><button class="primary" onclick="generarCancionero()">✦ &nbsp; Generar cancionero</button></section></main>
+                        <footer class="footer">CORO BELÉM · AD MAIOREM DEI GLORIAM</footer>
+    <div class="overlay" id="overlay"><div class="viewer-top"><span id="pageIndicator">Partitura</span>
+        <button onclick="cerrarCancionero()">✕ Cerrar</button></div>
+        <button class="nav-arrow prev" onclick="navegar(-1)" aria-label="Anterior">‹</button><img id="imagenActual" alt="Partitura seleccionada">
+        <button class="nav-arrow next" onclick="navegar(1)" aria-label="Siguiente">›</button></div><script>const cantosEsquemas={
             "Ordinario": {
                 "Entrada": [
                 { titulo: "Portones - Xavier Gonzalez", imgs: ["Entrada/Portones - Xavier.jpg"] },
@@ -178,7 +95,6 @@ const cantosEsquemas={
                 { titulo: "Aleluya Jesús B., msp", imgs: ["Aleluya/AleluyaPaz.jpg"] },
                 { titulo: "Aleluya José Netza Pineda - Modal", imgs: ["Aleluya/AleluyaModal.jpg"] },
                 { titulo: "Aleluya  Ordinario", imgs: ["Aleluya/Ordinario.jpeg"] },
-                { titulo: "Canta Aleluya", imgs: ["Aleluya/Canta Aleluya.jpeg"] },
                 { titulo: "Aleluya Varios - 161, 163, 189", imgs: ["Aleluya/A 161, 163, 189.jpeg"] },
                 { titulo: "Aleluya Varios - I y II", imgs: ["Aleluya/Aleluya I y II.jpeg"] }
                 
@@ -219,10 +135,10 @@ const cantosEsquemas={
                 { titulo: "Cordero Luis E., msp", imgs: ["Cordero/Paz y Perdón.jpeg"] }
             ],
             "Comunión": [
-                { titulo: "Pan del cielo - Benjamín Vega Robles", imgs: ["Comunion/Pan del cielo 1.png","Comunion/Pan del cielo 2.png"] }
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
             ],
             "Himnos": [
-                { titulo: "Viva Cristo Rey", imgs: ["Himnos/Viva Cristo 1.png", "Himnos/Viva Cristo 2.png"] }
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
             ]
             ,
             "Cantoral Adoración Nocturna": [
@@ -264,106 +180,4 @@ const cantosEsquemas={
             }
         };
 
-let seleccionados=[],imagenes=[],indice=0;
-
-function cargarCategorias(){
-    const esquema=esquemaSelect.value;
-    if(!esquema) return;
-
-    listaCategorias.innerHTML="<h2>Categorías</h2>";
-    listaCantos.style.display="none";
-
-    for(const cat in cantosEsquemas[esquema]){
-        const d=document.createElement("div");
-        d.className="canto-item";
-        d.textContent=cat;
-        d.onclick=()=>mostrarCantos(cat,esquema);
-        listaCategorias.appendChild(d);
-    }
-}
-
-function mostrarCantos(cat,esq){
-    listaCantos.innerHTML="<h2>Cantos disponibles</h2>";
-    listaCantos.style.display="block";
-
-    cantosEsquemas[esq][cat].forEach(c=>{
-        const d=document.createElement("div");
-        d.className="canto-item";
-        d.textContent=c.titulo;
-        d.onclick=()=>{ seleccionados.push(c); actualizar(); };
-        listaCantos.appendChild(d);
-    });
-}
-
-function actualizar(){
-    esquemaCantos.innerHTML="<h2>Esquema de cantos</h2>";
-    if(!seleccionados.length){
-        esquemaCantos.innerHTML+="<p>No has seleccionado ningún canto.</p>";
-        return;
-    }
-    seleccionados.forEach(c=>{
-        esquemaCantos.innerHTML+=`
-        <div>${c.titulo}
-            <span class="remove-btn" onclick="quitar('${c.titulo}')">❌</span>
-        </div>`;
-    });
-}
-
-function quitar(t){
-    seleccionados=seleccionados.filter(c=>c.titulo!==t);
-    actualizar();
-}
-
-function generarCancionero(){
-    imagenes=[];
-    seleccionados.forEach(c=>imagenes.push(...c.imgs));
-    if(!imagenes.length){
-        alert("No hay imágenes para mostrar");
-        return;
-    }
-    indice=0;
-    mostrarImagen();
-    overlay.style.display="flex";
-}
-
-function mostrarImagen(){
-    imagenActual.style.transform="scale(1)";
-    scale=1;
-    imagenActual.src=imagenes[indice];
-}
-
-function cerrarCancionero(){
-    overlay.style.display="none";
-}
-
-/* SWIPE */
-let startX=0;
-imagenActual.addEventListener("touchstart",e=>{
-    startX=e.touches[0].clientX;
-});
-imagenActual.addEventListener("touchend",e=>{
-    const dx=e.changedTouches[0].clientX-startX;
-    if(dx>50){ indice=(indice-1+imagenes.length)%imagenes.length; mostrarImagen(); }
-    if(dx<-50){ indice=(indice+1)%imagenes.length; mostrarImagen(); }
-});
-
-/* ZOOM */
-let scale=1;
-imagenActual.addEventListener("wheel",e=>{
-    e.preventDefault();
-    scale+=e.deltaY*-0.001;
-    scale=Math.min(Math.max(1,scale),5);
-    imagenActual.style.transform=`scale(${scale})`;
-},{passive:false});
-
-window.addEventListener("beforeunload", function (e) {
-    if (seleccionados.length > 0) {
-        e.preventDefault();
-        e.returnValue = "";
-    }
-});
-
-</script>
-
-</body>
-</html>
+let seleccionados=[],imagenes=[],indice=0,scale=1;const $=id=>document.getElementById(id);function cargarCategorias(){const esq=$('esquemaSelect').value;const root=$('listaCategorias');root.innerHTML='<div class="sub">02 · Repertorio</div><h2>Categorías</h2><div class="category-grid" id="catGrid"></div>';for(const cat of Object.keys(cantosEsquemas[esq])){const b=document.createElement('button');b.className='canto-item';b.textContent=cat;b.onclick=()=>mostrarCantos(cat,esq);$('catGrid').appendChild(b)}$('listaCantos').innerHTML='<div class="sub">03 · Selección</div><h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p>'}function mostrarCantos(cat,esq){const root=$('listaCantos');root.innerHTML='<div class="sub">03 · Selección</div><h2></h2><div class="song-list" id="songList"></div>';root.querySelector('h2').textContent=cat;for(const c of cantosEsquemas[esq][cat]){const b=document.createElement('button');b.className='canto-item';b.textContent=c.titulo;b.onclick=()=>{seleccionados.push(c);actualizar()};$('songList').appendChild(b)}}function actualizar(){const root=$('esquemaCantos');root.innerHTML='<div class="sub">04 · Tu celebración</div><div class="toolbar"><h2>Esquema de cantos</h2><span class="counter">'+seleccionados.length+' cantos</span></div>';if(!seleccionados.length){root.insertAdjacentHTML('beforeend','<p class="empty">No has seleccionado ningún canto.</p>');return}seleccionados.forEach((c,i)=>{const d=document.createElement('div');d.className='selected-row';const label=document.createElement('span');const n=document.createElement('span');n.className='num';n.textContent=String(i+1).padStart(2,'0');label.append(n,document.createTextNode(c.titulo));const b=document.createElement('button');b.className='remove-btn';b.textContent='Quitar';b.onclick=()=>{seleccionados.splice(i,1);actualizar()};d.append(label,b);root.appendChild(d)})}function generarCancionero(){imagenes=seleccionados.flatMap(c=>c.imgs);if(!imagenes.length){alert('Selecciona al menos un canto para generar tu cancionero.');return}indice=0;$('overlay').style.display='flex';mostrarImagen()}function mostrarImagen(){scale=1;$('imagenActual').style.transform='scale(1)';$('imagenActual').src=imagenes[indice];$('pageIndicator').textContent='Partitura '+(indice+1)+' de '+imagenes.length}function navegar(delta){indice=(indice+delta+imagenes.length)%imagenes.length;mostrarImagen()}function cerrarCancionero(){$('overlay').style.display='none'}let startX=0;$('imagenActual').addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});$('imagenActual').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-startX;if(Math.abs(dx)>55&&scale===1)navegar(dx>0?-1:1)});$('imagenActual').addEventListener('wheel',e=>{e.preventDefault();scale=Math.max(1,Math.min(5,scale-e.deltaY*.001));$('imagenActual').style.transform='scale('+scale+')'},{passive:false});document.addEventListener('keydown',e=>{if($('overlay').style.display!=='flex')return;if(e.key==='Escape')cerrarCancionero();if(e.key==='ArrowRight')navegar(1);if(e.key==='ArrowLeft')navegar(-1)});window.addEventListener('beforeunload',e=>{if(seleccionados.length){e.preventDefault();e.returnValue=''}});</script></body></html>
