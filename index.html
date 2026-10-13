@@ -38,15 +38,16 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
 </head>
 <body>
     <header class="hero"><img src="cabecera-belem.png" alt="Ángeles músicos y escudo del Coro Belém"></header>
-    <section class="intro"><div class="eyebrow">Música sacra · Repertorio litúrgico</div><h1>Cancionero Belém</h1><p>Prepara el esquema musical de cada celebración</p><div class="ornament">✦ ❧ ✦</div></section>
+    <section class="intro"><div class="eyebrow">Música litúgica · Esquema de cantos</div><h1>Orquesta Belém</h1></section>
     <main class="layout"><section class="panel full">
-        <div class="sub">01 · Celebración</div><h2>Tiempo litúrgico</h2><select id="esquemaSelect" onchange="cargarCategorias()"><option value="" disabled selected>Selecciona un tiempo litúrgico</option>
+        <h2>Tiempo litúrgico</h2><select id="esquemaSelect" onchange="cargarCategorias()"><option value="" disabled selected>Selecciona un tiempo litúrgico</option>
             <option value="Ordinario">Tiempo Ordinario</option>
-            <option value="Cuaresma">Cuaresma</option><option value="Pascua">Pascua</option></select></section><section class="panel" id="listaCategorias"><div class="sub">02 · Repertorio</div><h2>Categorías</h2><p class="empty">Selecciona primero un tiempo litúrgico.</p></section><section class="panel" id="listaCantos">
-                <div class="sub">03 · Selección</div><h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p></section>
+            <option value="Cuaresma">Cuaresma</option><option value="Pascua">Pascua</option></select></section><section class="panel" id="listaCategorias">
+                <h2>Categorías</h2><p class="empty">Selecciona primero un tiempo litúrgico.</p></section><section class="panel" id="listaCantos">
+                <h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p></section>
                 <section class="panel full selected-cantos" id="esquemaCantos">
-                    <div class="sub">04 · Tu celebración</div><div class="toolbar"><h2>Esquema de cantos</h2>
-                        <span class="counter" id="count">0 cantos</span></div><p class="empty">No has seleccionado ningún canto.</p></section><section class="full"><button class="primary" onclick="generarCancionero()">✦ &nbsp; Generar cancionero</button></section></main>
+                    <div class="toolbar"><h2>Esquema de cantos</h2>
+                        <span class="counter" id="count">0 cantos</span></div><p class="empty">No has seleccionado ningún canto.</p></section><section class="full"><button class="primary" onclick="generarCancionero()"> &nbsp; Generar cancionero</button></section></main>
                         <footer class="footer">CORO BELÉM</footer>
     <div class="overlay" id="overlay"><div class="viewer-top"><span id="pageIndicator">Partitura</span>
         <button onclick="cerrarCancionero()">✕ Cerrar</button></div>
