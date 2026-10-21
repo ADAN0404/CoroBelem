@@ -6,8 +6,44 @@ const setStatus=s=>$('status').textContent=s;
 function xmlDoc(str){const d=new DOMParser().parseFromString(str,'application/xml');if(d.querySelector('parsererror'))throw Error('MusicXML no válido');return d}
 function filteredXML(ids){const d=xmlDoc(original);const keep=new Set(ids);const pl=d.getElementsByTagName('part-list')[0];for(const node of [...pl.children]){if(node.localName==='score-part'&&!keep.has(node.getAttribute('id')))node.remove();if(node.localName==='part-group')node.remove()}for(const p of [...d.documentElement.children])if(p.localName==='part'&&!keep.has(p.getAttribute('id')))p.remove();return new XMLSerializer().serializeToString(d)}
 function resizePaper(){if(!lastSVG)return;const w=Math.max(220,Math.min($('reader').clientWidth-14,760));$('paper').style.width=w+'px';$('paper').style.height=(w*297/210)+'px'}
-function showPage(){if(!toolkit||!total)return;lastSVG=toolkit.renderToSVG(page,{});$('paper').innerHTML=lastSVG;resizePaper();$('count').textContent=`Hoja ${page} de ${total}`;$('prev').disabled=page<=1;$('next').disabled=page>=total}
+function estilizarBreves(){
+ // Verovio usa dur-breve para la duración de dos redondas.
+ const svg=$('paper').querySelector('svg');if(!svg)return;
+ for(const note of svg.querySelectorAll('g.note.dur-breve, g.note[class~="dur-breve"]')){
+   for(const head of note.querySelectorAll('g.notehead, .notehead')){
+     if(head.dataset.belemBreve)return;
+     let box;try{box=head.getBBox()}catch(e){continue}
+     if(!box||!box.width||!box.height)continue;
+     const ns='http://www.w3.org/2000/svg',cx=box.x+box.width/2,cy=box.y+box.height/2;
+     const rx=box.width*.34,ry=box.height*.34;
+     const group=document.createElementNS(ns,'g');group.setAttribute('fill','none');group.setAttribute('stroke','#111');group.setAttribute('stroke-width',Math.max(1,ry*.22));
+     const oval=document.createElementNS(ns,'ellipse');oval.setAttribute('cx',cx);oval.setAttribute('cy',cy);oval.setAttribute('rx',rx);oval.setAttribute('ry',ry);group.appendChild(oval);
+     for(const x of [cx-rx-ry*.3,cx+rx+ry*.3]){const line=document.createElementNS(ns,'line');line.setAttribute('x1',x);line.setAttribute('x2',x);line.setAttribute('y1',cy-ry*1.3);line.setAttribute('y2',cy+ry*1.3);group.appendChild(line)}
+     head.style.visibility='hidden';head.parentNode.insertBefore(group,head.nextSibling);head.dataset.belemBreve='1';
+   }
+ }
+}
+function showPage(){if(!toolkit||!total)return;lastSVG=toolkit.renderToSVG(page,{});$('paper').innerHTML=lastSVG;estilizarBreves();resizePaper();$('count').textContent=`Hoja ${page} de ${total}`;$('prev').disabled=page<=1;$('next').disabled=page>=total}
 function generate(){const ids=[...document.querySelectorAll('#choices input:checked')].map(e=>e.value);if(!ids.length){setStatus('Selecciona al menos un instrumento.');return}if(!toolkit){setStatus('Esperando motor de partituras…');return}try{setStatus('Maquetando '+ids.length+' instrumentos…');toolkit.setOptions({pageWidth:2100,pageHeight:2970,scale:40,breaks:'auto',adjustPageHeight:false,footer:'none',header:'none'});const ok=toolkit.loadData(filteredXML(ids));if(ok===false)throw Error('Verovio no pudo leer la selección');total=toolkit.getPageCount();if(!total)throw Error('No se generaron páginas');page=1;showPage();setStatus(`${ids.length} instrumentos · ${total} hoja(s) calculadas por Verovio`)}catch(e){console.error(e);setStatus('Error: '+e.message)}}
 $('all').onclick=()=>document.querySelectorAll('#choices input').forEach(e=>e.checked=true);$('none').onclick=()=>document.querySelectorAll('#choices input').forEach(e=>e.checked=false);$('render').onclick=generate;$('prev').onclick=()=>{if(page>1){page--;showPage()}};$('next').onclick=()=>{if(page<total){page++;showPage()}};let tx=0,ty=0;$('reader').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});$('reader').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.4){if(dx<0)$('next').click();else $('prev').click()}},{passive:true});window.addEventListener('resize',resizePaper);
-async function start(){try{const res=await fetch('Orquestaciones/portones.musicxml');if(!res.ok)throw Error('No se encontró el MusicXML (usa GitHub Pages, no file://)');original=await res.text();const d=xmlDoc(original);parts=[...d.getElementsByTagName('score-part')].map(p=>({id:p.getAttribute('id'),name:p.getElementsByTagName('part-name')[0]?.textContent||p.getAttribute('id')}));$('choices').replaceChildren(...parts.map(p=>{const label=document.createElement('label');label.className='choice';const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.checked=true;label.append(input,document.createTextNode(p.name));return label}));if(!window.verovio?.module)throw Error('No cargó la biblioteca Verovio');await new Promise((resolve,reject)=>{const m=verovio.module;if(m.calledRun||m.runtimeInitialized){resolve();return}const prev=m.onRuntimeInitialized;m.onRuntimeInitialized=()=>{if(typeof prev==='function')prev();resolve()};setTimeout(()=>reject(Error('Verovio tardó demasiado en iniciar')),15000)});toolkit=new verovio.toolkit();generate()}catch(e){console.error(e);setStatus('Error: '+e.message)}}start();
+async function esperarVerovio(){
+ // El módulo WASM puede estar inicializado antes de que asignemos el callback.
+ // Probar el constructor evita perder el evento onRuntimeInitialized.
+ const limit=Date.now()+60000;
+ while(Date.now()<limit){
+   if(window.verovio?.toolkit){
+     try {return new window.verovio.toolkit()} catch(e) { /* WASM aún cargando */ }
+   }
+   await new Promise(resolve=>setTimeout(resolve,350));
+ }
+ throw Error('No se pudo iniciar Verovio. Revisa la conexión y vuelve a cargar la página.');
+}
+async function start(){try{
+ const res=await fetch('Orquestaciones/portones.musicxml');
+ if(!res.ok)throw Error('No se encontró el MusicXML (usa GitHub Pages, no file://)');
+ original=await res.text();const d=xmlDoc(original);
+ parts=[...d.getElementsByTagName('score-part')].map(p=>({id:p.getAttribute('id'),name:p.getElementsByTagName('part-name')[0]?.textContent||p.getAttribute('id')}));
+ $('choices').replaceChildren(...parts.map(p=>{const label=document.createElement('label');label.className='choice';const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.checked=true;label.append(input,document.createTextNode(p.name));return label}));
+ setStatus('Iniciando Verovio…');toolkit=await esperarVerovio();generate();
+}catch(e){console.error(e);setStatus('Error: '+e.message)}}start();
 </script></body></html>
