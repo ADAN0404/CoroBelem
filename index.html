@@ -82,6 +82,13 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
 #scoreNav button{background:transparent;border:0;color:white;font-size:27px;cursor:pointer;min-width:42px;min-height:40px}
 #scoreNav button:disabled{opacity:.25}
 @media(max-width:700px){#scoreActual{padding-top:48px!important}#scoreActual .osmdCanvasPage{box-shadow:none}}
+
+#scoreNav{max-width:calc(100vw - 14px);gap:5px;white-space:nowrap;bottom:6px}
+#scoreNav button{min-width:32px;min-height:36px;font-size:22px}
+.score-zoom-controls{display:flex;align-items:center;gap:2px;border-left:1px solid #ffffff66;padding-left:7px}
+#zoomLabel{min-width:40px;text-align:center;font-size:12px}
+#scoreNav #zoomReset{font-size:11px;min-width:38px}
+@media(max-width:480px){#scoreNav{padding:3px 6px;font-size:11px}#scoreNav button{min-width:28px}#zoomLabel{min-width:33px}}
 </style>
 </head>
 <body>
@@ -99,7 +106,7 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
                         <footer class="footer">CORO BELÉM</footer>
     <div class="overlay" id="overlay"><div class="viewer-top"><span id="pageIndicator">Partitura</span>
         <button onclick="cerrarCancionero()">✕ Cerrar</button></div>
-        <img id="imagenActual" alt="Partitura seleccionada"><div id="scoreActual"></div><nav id="scoreNav" aria-label="Navegación de páginas"><button id="scorePrev" type="button" aria-label="Página anterior">‹</button><span id="scoreCount"></span><button id="scoreNext" type="button" aria-label="Página siguiente">›</button></nav>
+        <img id="imagenActual" alt="Partitura seleccionada"><div id="scoreActual"></div><nav id="scoreNav" aria-label="Navegación de páginas"><button id="scorePrev" type="button" aria-label="Página anterior">‹</button><span id="scoreCount"></span><span class="score-zoom-controls"><button id="zoomOut" type="button" aria-label="Reducir partitura">−</button><span id="zoomLabel">Auto</span><button id="zoomIn" type="button" aria-label="Ampliar partitura">+</button><button id="zoomReset" type="button" aria-label="Restablecer tamaño automático">Auto</button></span><button id="scoreNext" type="button" aria-label="Página siguiente">›</button></nav>
         </div>
 <div class="instrument-panel" id="instrumentPanel" role="dialog" aria-modal="true" aria-label="Seleccionar instrumentos">
   <div class="instrument-card"><h2>Selecciona tus instrumentos</h2>
@@ -240,7 +247,7 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
         };
 
 let seleccionados=[],paginas=[],indice=0,scale=1,temporizadorControles;
-let xmlCache=new Map(),osmd=null,scoreZoom=.85,pendingSong=null,scorePage=0,scorePages=[],renderSerial=0,resizeTimer=null;
+let xmlCache=new Map(),osmd=null,scoreZoom=.85,pendingSong=null,scorePage=0,scorePages=[],renderSerial=0,resizeTimer=null,zoomMultiplier=1;
 const $=id=>document.getElementById(id);
 function cargarCategorias(){const esq=$('esquemaSelect').value,root=$('listaCategorias');root.innerHTML='<h2>Categorías</h2><div class="category-grid" id="catGrid"></div>';for(const cat of Object.keys(cantosEsquemas[esq])){const b=document.createElement('button');b.className='canto-item';b.textContent=cat;b.onclick=()=>mostrarCantos(cat,esq);$('catGrid').appendChild(b)}$('listaCantos').innerHTML='<h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p>'}
 function mostrarCantos(cat,esq){const root=$('listaCantos');root.innerHTML='<h2></h2><div class="song-list" id="songList"></div>';root.querySelector('h2').textContent=cat;for(const c of cantosEsquemas[esq][cat]){const b=document.createElement('button');b.className='canto-item';b.textContent=c.titulo+(c.musicxml?' · 🎼 Orquestal':'');b.onclick=()=>{seleccionados.push({...c,partIds:null});actualizar()};$('songList').appendChild(b)}}
@@ -257,9 +264,11 @@ if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')
 $('scoreActual').innerHTML='';
 if(!window.opensheetmusicdisplay)throw new Error('No se cargó la biblioteca OpenSheetMusicDisplay. Revisa tu conexión.');
 osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay('scoreActual',{autoResize:false,backend:'svg',drawingParameters:'default',pageFormat:'A4',pageFormatEndless:false,drawTitle:true});
-// Aumentar o reducir el tamaño musical según el ancho real del dispositivo.
+// Densidad automática: más instrumentos -> pentagramas más compactos.
+const n=page.c.partIds?.length||parts.length;
+const autoFactor=n<=2?1:n<=4?.90:n<=7?.80:n<=10?.70:.60;
 const viewportWidth=Math.max(320,$('scoreActual').clientWidth-18);
-osmd.zoom=Math.min(1.6,Math.max(.42,viewportWidth/900));
+osmd.zoom=Math.min(1.6,Math.max(.35,(viewportWidth/900)*autoFactor*zoomMultiplier));
 // Cargar el MusicXML íntegro: no eliminar partes ni referencias del documento.
 // Corregir los metadatos sin alterar notas ni compases.
 const docTitle=new DOMParser().parseFromString(xml,'application/xml');
@@ -344,11 +353,14 @@ function mostrarHojaOrquestal(){
    const svg=page.querySelector('svg');if(!svg)continue;
    const w=svg.viewBox?.baseVal?.width||parseFloat(svg.getAttribute('width'))||900;
    const h=svg.viewBox?.baseVal?.height||parseFloat(svg.getAttribute('height'))||1200;
-   const displayW=Math.min(available,w*1.7);
+   const displayW=Math.min(available,w*1.7) * (Math.min(1.6,Math.max(.35,((paginas[indice]?.c?.partIds?.length||14)<=2?1:(paginas[indice]?.c?.partIds?.length||14)<=4?.90:(paginas[indice]?.c?.partIds?.length||14)<=7?.80:(paginas[indice]?.c?.partIds?.length||14)<=10?.70:.60)*zoomMultiplier)));
    svg.style.width=displayW+'px';svg.style.height=(displayW*h/w)+'px';
    page.style.width=displayW+'px';page.style.maxWidth='100%';
  }
  $('scoreActual').scrollTo({top:0,left:0});
+ const count=paginas[indice]?.c?.partIds?.length||14;
+ const auto=count<=2?1:count<=4?.9:count<=7?.8:count<=10?.7:.6;
+ $('zoomLabel').textContent=Math.round(auto*zoomMultiplier*100)+'%';
 }
 function cambiarHoja(delta){
  if(!scorePages.length)return;
@@ -358,6 +370,10 @@ function cambiarHoja(delta){
 }
 $('scorePrev').onclick=()=>cambiarHoja(-1);
 $('scoreNext').onclick=()=>cambiarHoja(1);
+function ajustarZoom(factor){zoomMultiplier=Math.min(1.8,Math.max(.6,Math.round(zoomMultiplier*factor*100)/100));mostrarPagina(true)}
+$('zoomOut').onclick=()=>ajustarZoom(.9);
+$('zoomIn').onclick=()=>ajustarZoom(1.1);
+$('zoomReset').onclick=()=>{zoomMultiplier=1;mostrarPagina(true)};
 function navegar(delta){indice=(indice+delta+paginas.length)%paginas.length;mostrarPagina()}
 function cerrarCancionero(){++renderSerial;$('overlay').style.display='none';clearTimeout(temporizadorControles);if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{})}
 function mostrarControles(){clearTimeout(temporizadorControles);document.querySelector('.viewer-top').classList.remove('oculto');temporizadorControles=setTimeout(()=>document.querySelector('.viewer-top').classList.add('oculto'),3000)}
