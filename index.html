@@ -89,6 +89,12 @@ color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
 #zoomLabel{min-width:40px;text-align:center;font-size:12px}
 #scoreNav #zoomReset{font-size:11px;min-width:38px}
 @media(max-width:480px){#scoreNav{padding:3px 6px;font-size:11px}#scoreNav button{min-width:28px}#zoomLabel{min-width:33px}}
+
+/* V4: papel fijo con paginación propia de OSMD y ajuste de visualización. */
+.score-mode #scoreActual{display:flex!important;justify-content:center!important;align-items:flex-start!important;overflow:auto!important;padding:53px 10px 65px!important;touch-action:pan-y}
+#osmdStage{margin:0 auto;flex-shrink:0!important}
+#osmdStage .osmdCanvasPage{background:white;box-shadow:0 2px 10px #0002}
+#osmdStage .osmdCanvasPage[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -259,121 +265,111 @@ $('clearParts').onclick=()=>document.querySelectorAll('#instrumentGrid input').f
 $('cancelParts').onclick=()=>{$('instrumentPanel').style.display='none';pendingSong=null};
 $('confirmParts').onclick=()=>{if(!pendingSong)return;const ids=[...document.querySelectorAll('#instrumentGrid input:checked')].map(x=>x.value);if(!ids.length){$('instrumentStatus').textContent='Selecciona al menos un instrumento.';return}pendingSong.partIds=ids;$('instrumentPanel').style.display='none';pendingSong=null;actualizar()};
 function generarCancionero(){if(!seleccionados.length){alert('Selecciona al menos un canto.');return}const sinConfig=seleccionados.find(c=>c.musicxml&&!c.partIds);if(sinConfig){abrirSelector(sinConfig);return}paginas=seleccionados.flatMap(c=>c.musicxml?[{tipo:'score',c}]:c.imgs.map(src=>({tipo:'img',src})));indice=0;$('overlay').style.display='flex';mostrarPagina();mostrarControles();const visor=$('overlay');if(visor.requestFullscreen)visor.requestFullscreen().catch(()=>{})}
-async function mostrarPagina(preservePage=false){const previousPage=scorePage;const serial=++renderSerial;const page=paginas[indice];if(!page)return;scale=1;$('imagenActual').style.transform='scale(1)';$('pageIndicator').textContent='Partitura '+(indice+1)+' de '+paginas.length;if(page.tipo==='img'){$('scoreNav').style.display='none';scorePages=[];$('overlay').classList.remove('score-mode');$('imagenActual').src=page.src;return}$('overlay').classList.add('score-mode');$('scoreActual').innerHTML='<p style="padding:25px">Generando partitura orquestal…</p>';const current=indice;try{const {xml,parts}=await cargarXML(page.c);
-if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')return;
-$('scoreActual').innerHTML='';
-if(!window.opensheetmusicdisplay)throw new Error('No se cargó la biblioteca OpenSheetMusicDisplay. Revisa tu conexión.');
-osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay('scoreActual',{autoResize:false,backend:'svg',drawingParameters:'default',pageFormat:'A4',pageFormatEndless:false,drawTitle:true});
-// Densidad automática: más instrumentos -> pentagramas más compactos.
-const n=page.c.partIds?.length||parts.length;
-const autoFactor=n<=2?1:n<=4?.90:n<=7?.80:n<=10?.70:.60;
-const viewportWidth=Math.max(320,$('scoreActual').clientWidth-18);
-osmd.zoom=Math.min(1.6,Math.max(.35,(viewportWidth/900)*autoFactor*zoomMultiplier));
-// Cargar el MusicXML íntegro: no eliminar partes ni referencias del documento.
-// Corregir los metadatos sin alterar notas ni compases.
-const docTitle=new DOMParser().parseFromString(xml,'application/xml');
-for(const tag of ['work-title','movement-title']){
- const node=docTitle.getElementsByTagName(tag)[0];
- if(node)node.textContent='¡Portones, alzad nuestros dinteles!';
-}
-await osmd.load(new XMLSerializer().serializeToString(docTitle));
-if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')return;
-const instruments=osmd.Sheet?.Instruments||[];
-if(instruments.length!==parts.length)console.warn('El visor detectó una cantidad diferente de instrumentos:',instruments.length,parts.length);
-// Los instrumentos del visor conservan el orden de la lista MusicXML.
-for(let i=0;i<instruments.length;i++){
-  if(parts[i])instruments[i].Visible=page.c.partIds.includes(parts[i].id);
-}
-osmd.render();
-// OSMD genera una superficie SVG por página en modo paginado.
-scorePages=[...$('scoreActual').querySelectorAll('.osmdCanvasPage')];
-if(!scorePages.length)scorePages=[...$('scoreActual').children].filter(el=>el.querySelector('svg'));
-// Algunos archivos generan un único SVG interminable. Dividirlo en hojas visuales
-// sin cortar ni alterar el MusicXML original.
-if(scorePages.length===1)dividirPaginaContinua();
-scorePage=preservePage?Math.min(previousPage,scorePages.length-1):0;
-mostrarHojaOrquestal();
-$('scoreActual').scrollTop=0;
-$('scoreActual').scrollLeft=0}catch(e){console.error(e);$('scoreActual').textContent='No se pudo mostrar la partitura: '+e.message}}
-function dividirPaginaContinua(){
- const container=$('scoreActual');
- const original=scorePages[0];
- const svg=original?.querySelector('svg');
- if(!svg)return;
- const vb=svg.viewBox?.baseVal;
- const svgW=vb?.width||parseFloat(svg.getAttribute('width'))||1000;
- const svgH=vb?.height||parseFloat(svg.getAttribute('height'))||0;
- if(!svgH)return;
- // Calcular la proporción entre unidades SVG y píxeles de pantalla.
- const svgPixels=svg.getBoundingClientRect().width||svgW;
- const unitsPerPixel=svgW/svgPixels;
- const availableHeight=Math.max(300,window.innerHeight-125)*unitsPerPixel;
- if(svgH<=availableHeight*1.1)return;
- // Localizar comienzos de sistemas por los grupos de pentagramas de OSMD.
- const staffNodes=[...svg.querySelectorAll('[class*=staffline], [class*=StaffLine]')];
- let ys=[];
- for(const node of staffNodes){
-   try{const b=node.getBBox();const y=b.y;if(Number.isFinite(y)&&b.width>0)ys.push(y)}catch(e){}
+// El motor pagina la música; nunca cortamos un SVG continuo por coordenadas.
+const SCORE_LAYOUT_WIDTH=850; // Ancho lógico fijo del papel, independiente de la tablet.
+const SCORE_PAGE_FORMAT='A4';
+let scoreBaseZoom=1;
+async function mostrarPagina(preservePage=false){
+ const previousPage=scorePage, serial=++renderSerial, page=paginas[indice];
+ if(!page)return;
+ scale=1;$('imagenActual').style.transform='scale(1)';
+ $('pageIndicator').textContent='Partitura '+(indice+1)+' de '+paginas.length;
+ if(page.tipo==='img'){
+  $('scoreNav').style.display='none';scorePages=[];
+  $('overlay').classList.remove('score-mode');$('imagenActual').src=page.src;return;
  }
- ys.sort((a,b)=>a-b);
- const clusters=[];
- for(const y of ys){if(!clusters.length||y-clusters[clusters.length-1]>20)clusters.push(y)}
- const cuts=[0];let current=0;
- while(current+availableHeight<svgH-30){
-   const target=current+availableHeight;
-   const candidates=clusters.filter(y=>y>current+availableHeight*.45&&y<target-25);
-   // Corte antes de un sistema nuevo; si no se detectan sistemas, usar altura fija.
-   const cut=candidates.length?candidates[candidates.length-1]-12:target;
-   if(cut<=current+80)break;
-   cuts.push(cut);current=cut;
- }
- cuts.push(svgH);
- if(cuts.length<=2)return;
- const fragment=document.createDocumentFragment();const pages=[];
- for(let i=0;i<cuts.length-1;i++){
-   const top=cuts[i],height=cuts[i+1]-top;
-   const wrap=document.createElement('div');wrap.className='belem-score-page';
-   const clone=svg.cloneNode(true);
-   clone.setAttribute('viewBox',`${vb?.x||0} ${top+(vb?.y||0)} ${svgW} ${height}`);
-   clone.setAttribute('width',svgW);clone.setAttribute('height',height);
-   clone.style.width='100%';clone.style.height='auto';
-   wrap.appendChild(clone);fragment.appendChild(wrap);pages.push(wrap);
- }
- container.replaceChildren(fragment);scorePages=pages;
+ $('overlay').classList.add('score-mode');
+ const host=$('scoreActual');host.textContent='Generando y distribuyendo la partitura…';
+ const current=indice;
+ try{
+  const {xml,parts}=await cargarXML(page.c);
+  if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')return;
+  if(!window.opensheetmusicdisplay)throw new Error('No se cargó OpenSheetMusicDisplay.');
+  host.replaceChildren();
+  const stage=document.createElement('div');stage.id='osmdStage';
+  stage.style.cssText=`width:${SCORE_LAYOUT_WIDTH}px;max-width:none;flex:none;position:relative`;
+  host.appendChild(stage);
+  osmd=new opensheetmusicdisplay.OpenSheetMusicDisplay(stage,{
+   autoResize:false,backend:'svg',drawingParameters:'default',
+   pageFormat:SCORE_PAGE_FORMAT,pageFormatEndless:false,
+   renderSingleHorizontalStaffline:false,drawTitle:true
+  });
+  // Zoom de grabado constante: no depende del ancho del dispositivo ni de la cantidad de partes.
+  // El motor calcula saltos y páginas sobre una hoja fija.
+  osmd.zoom=scoreBaseZoom;
+  const docTitle=new DOMParser().parseFromString(xml,'application/xml');
+  for(const tag of ['work-title','movement-title']){
+   const node=docTitle.getElementsByTagName(tag)[0];
+   if(node)node.textContent='¡Portones, alzad nuestros dinteles!';
+  }
+  await osmd.load(new XMLSerializer().serializeToString(docTitle));
+  if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')return;
+  const instruments=osmd.Sheet?.Instruments||[];
+  for(let i=0;i<instruments.length;i++){
+   if(parts[i])instruments[i].Visible=page.c.partIds.includes(parts[i].id);
+  }
+  // Las reglas de página se aplican antes de renderizar, no mediante recortes posteriores.
+  const rules=osmd.EngravingRules;
+  if(rules){
+   rules.RenderSingleHorizontalStaffline=false;
+   if('PageFormat' in rules && window.opensheetmusicdisplay.PageFormat){
+    try{rules.PageFormat=new opensheetmusicdisplay.PageFormat(210,297,'A4')}catch(e){}
+   }
+  }
+  osmd.render();
+  if(serial!==renderSerial||current!==indice||$('overlay').style.display==='none')return;
+  scorePages=[...stage.querySelectorAll('.osmdCanvasPage')];
+  if(!scorePages.length)scorePages=[...stage.children].filter(el=>el.querySelector('svg'));
+  if(!scorePages.length)throw new Error('El motor no generó ninguna hoja.');
+  scorePages.forEach(el=>{
+   el.style.margin='0 auto';el.style.flex='none';
+  });
+  scorePage=preservePage?Math.min(previousPage,scorePages.length-1):0;
+  mostrarHojaOrquestal();
+ }catch(e){console.error(e);host.textContent='No se pudo mostrar la partitura: '+e.message}
 }
 function mostrarHojaOrquestal(){
  const total=scorePages.length;
  scorePages.forEach((p,i)=>{p.hidden=i!==scorePage;p.style.display=i===scorePage?'block':'none'});
  $('scoreCount').textContent=total?'Hoja '+(scorePage+1)+' de '+total:'Sin páginas';
- $('scorePrev').disabled=scorePage===0;
- $('scoreNext').disabled=scorePage>=total-1;
+ $('scorePrev').disabled=scorePage===0;$('scoreNext').disabled=scorePage>=total-1;
  $('scoreNav').style.display='flex';
- const available=Math.max(280,$('scoreActual').clientWidth-20);
- for(const page of scorePages){
-   const svg=page.querySelector('svg');if(!svg)continue;
-   const w=svg.viewBox?.baseVal?.width||parseFloat(svg.getAttribute('width'))||900;
-   const h=svg.viewBox?.baseVal?.height||parseFloat(svg.getAttribute('height'))||1200;
-   const displayW=Math.min(available,w*1.7) * (Math.min(1.6,Math.max(.35,((paginas[indice]?.c?.partIds?.length||14)<=2?1:(paginas[indice]?.c?.partIds?.length||14)<=4?.90:(paginas[indice]?.c?.partIds?.length||14)<=7?.80:(paginas[indice]?.c?.partIds?.length||14)<=10?.70:.60)*zoomMultiplier)));
-   svg.style.width=displayW+'px';svg.style.height=(displayW*h/w)+'px';
-   page.style.width=displayW+'px';page.style.maxWidth='100%';
+ const page=scorePages[scorePage];
+ if(page){
+  // Ajuste visual de la hoja COMPLETA; no cambia la maquetación ni recorta sistemas.
+  const naturalW=page.offsetWidth||SCORE_LAYOUT_WIDTH;
+  const naturalH=page.offsetHeight||naturalW*1.414;
+  const availableW=Math.max(240,$('scoreActual').clientWidth-22);
+  const availableH=Math.max(250,$('scoreActual').clientHeight-125);
+  const fit=Math.min(availableW/naturalW,availableH/naturalH);
+  const factor=Math.max(.15,fit*zoomMultiplier);
+  const stage=$('osmdStage');
+  stage.style.width=(naturalW*factor)+'px';
+  stage.style.height=(naturalH*factor)+'px';
+  page.style.transformOrigin='top left';
+  page.style.transform=`scale(${factor})`;
+  // No redimensionar SVG: el papel se escala completo, conservando su proporción.
+  page.style.width=naturalW+'px';
+  page.style.height=naturalH+'px';
+  for(const other of scorePages)if(other!==page)other.style.transform='none';
  }
+ $('zoomLabel').textContent=Math.round(zoomMultiplier*100)+'%';
  $('scoreActual').scrollTo({top:0,left:0});
- const count=paginas[indice]?.c?.partIds?.length||14;
- const auto=count<=2?1:count<=4?.9:count<=7?.8:count<=10?.7:.6;
- $('zoomLabel').textContent=Math.round(auto*zoomMultiplier*100)+'%';
 }
 function cambiarHoja(delta){
  if(!scorePages.length)return;
- const next=scorePage+delta;
- if(next<0||next>=scorePages.length)return;
+ const next=scorePage+delta;if(next<0||next>=scorePages.length)return;
  scorePage=next;mostrarHojaOrquestal();mostrarControles();
 }
 $('scorePrev').onclick=()=>cambiarHoja(-1);
 $('scoreNext').onclick=()=>cambiarHoja(1);
-function ajustarZoom(factor){zoomMultiplier=Math.min(1.8,Math.max(.6,Math.round(zoomMultiplier*factor*100)/100));mostrarPagina(true)}
+function ajustarZoom(factor){
+ zoomMultiplier=Math.min(2,Math.max(.5,Math.round(zoomMultiplier*factor*100)/100));
+ mostrarHojaOrquestal();
+}
 $('zoomOut').onclick=()=>ajustarZoom(.9);
 $('zoomIn').onclick=()=>ajustarZoom(1.1);
-$('zoomReset').onclick=()=>{zoomMultiplier=1;mostrarPagina(true)};
+$('zoomReset').onclick=()=>{zoomMultiplier=1;mostrarHojaOrquestal()};
 function navegar(delta){indice=(indice+delta+paginas.length)%paginas.length;mostrarPagina()}
 function cerrarCancionero(){++renderSerial;$('overlay').style.display='none';clearTimeout(temporizadorControles);if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{})}
 function mostrarControles(){clearTimeout(temporizadorControles);document.querySelector('.viewer-top').classList.remove('oculto');temporizadorControles=setTimeout(()=>document.querySelector('.viewer-top').classList.add('oculto'),3000)}
@@ -385,7 +381,7 @@ document.addEventListener('keydown',e=>{if($('instrumentPanel').style.display===
 function recalcularAlRotar(){
  if($('overlay').style.display!=='flex'||!$('overlay').classList.contains('score-mode'))return;
  clearTimeout(resizeTimer);
- resizeTimer=setTimeout(()=>mostrarPagina(true),350);
+ resizeTimer=setTimeout(()=>mostrarHojaOrquestal(),200);
 }
 window.addEventListener('resize',recalcularAlRotar);
 window.addEventListener('orientationchange',recalcularAlRotar);
