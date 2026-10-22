@@ -1,49 +1,202 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prueba de maquetación · Coro Belém</title><style>
-:root{font-family:Arial,sans-serif;color:#30251d}*{box-sizing:border-box}body{margin:0;background:#f5f1eb}header{background:#47050a;color:white;padding:15px 20px}h1{font-size:19px;margin:0}main{max-width:1100px;margin:20px auto;padding:0 14px}.panel{background:white;border:1px solid #d8c4a2;border-radius:12px;padding:17px;margin-bottom:15px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.choice{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #eee0c9;border-radius:8px}button{background:#47050a;color:white;border:0;border-radius:7px;padding:11px 15px;cursor:pointer}button:disabled{opacity:.35}button.secondary{background:white;color:#47050a;border:1px solid #a97f52}.actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.reader{background:#ded9d2;min-height:300px;display:flex;justify-content:center;align-items:flex-start;padding:15px 6px 70px;position:relative;overflow:auto}.paper{background:white;box-shadow:0 4px 20px #0002;flex:none;line-height:0}.paper svg{display:block;width:100%;height:100%}.nav{position:sticky;bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px;background:#47050a;color:white;border-radius:30px;padding:7px;margin:12px auto;max-width:360px}.nav button{padding:7px 14px;background:transparent;font-size:23px}#status{font-size:13px;color:#6b4b2a}small{color:#685b4f}
-</style></head><body><header><h1>Orquesta Belém · Prueba de partituras dinámicas</h1></header><main><section class="panel"><strong>Selecciona cualquier combinación de instrumentos</strong><p><small>La hoja A4 mantiene su proporción; el motor calcula de nuevo los sistemas y el número de páginas.</small></p><div id="choices" class="grid"></div><div class="actions"><button class="secondary" id="all">Todos</button><button class="secondary" id="none">Ninguno</button><button id="render">Generar partitura</button></div><div id="status" role="status">Cargando…</div></section><div class="reader" id="reader"><div class="paper" id="paper"></div></div><nav class="nav"><button id="prev" aria-label="Hoja anterior">‹</button><span id="count">Sin páginas</span><button id="next" aria-label="Hoja siguiente">›</button></nav></main><script src="https://www.verovio.org/javascript/latest/verovio-toolkit-wasm.js"></script><script>
-const $=id=>document.getElementById(id);let toolkit,original,parts=[],page=1,total=0,lastSVG='',generation=0;
-const setStatus=s=>$('status').textContent=s;
-function xmlDoc(str){const d=new DOMParser().parseFromString(str,'application/xml');if(d.querySelector('parsererror'))throw Error('MusicXML no válido');return d}
-function filteredXML(ids){const d=xmlDoc(original);const keep=new Set(ids);const pl=d.getElementsByTagName('part-list')[0];for(const node of [...pl.children]){if(node.localName==='score-part'&&!keep.has(node.getAttribute('id')))node.remove();if(node.localName==='part-group')node.remove()}for(const p of [...d.documentElement.children])if(p.localName==='part'&&!keep.has(p.getAttribute('id')))p.remove();return new XMLSerializer().serializeToString(d)}
-function resizePaper(){if(!lastSVG)return;const w=Math.max(220,Math.min($('reader').clientWidth-14,760));$('paper').style.width=w+'px';$('paper').style.height=(w*297/210)+'px'}
-function estilizarBreves(){
- // Verovio usa dur-breve para la duración de dos redondas.
- const svg=$('paper').querySelector('svg');if(!svg)return;
- for(const note of svg.querySelectorAll('g.note.dur-breve, g.note[class~="dur-breve"]')){
-   for(const head of note.querySelectorAll('g.notehead, .notehead')){
-     if(head.dataset.belemBreve)return;
-     let box;try{box=head.getBBox()}catch(e){continue}
-     if(!box||!box.width||!box.height)continue;
-     const ns='http://www.w3.org/2000/svg',cx=box.x+box.width/2,cy=box.y+box.height/2;
-     const rx=box.width*.34,ry=box.height*.34;
-     const group=document.createElementNS(ns,'g');group.setAttribute('fill','none');group.setAttribute('stroke','#111');group.setAttribute('stroke-width',Math.max(1,ry*.22));
-     const oval=document.createElementNS(ns,'ellipse');oval.setAttribute('cx',cx);oval.setAttribute('cy',cy);oval.setAttribute('rx',rx);oval.setAttribute('ry',ry);group.appendChild(oval);
-     for(const x of [cx-rx-ry*.3,cx+rx+ry*.3]){const line=document.createElementNS(ns,'line');line.setAttribute('x1',x);line.setAttribute('x2',x);line.setAttribute('y1',cy-ry*1.3);line.setAttribute('y2',cy+ry*1.3);group.appendChild(line)}
-     head.style.visibility='hidden';head.parentNode.insertBefore(group,head.nextSibling);head.dataset.belemBreve='1';
-   }
- }
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Cancionero | Coro Belém</title><link rel="icon" href="Logo.png">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+:root{--gold:#dfb86c;--wine:#ffffff;--cream:#27211c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#ffffff 0%,#faf8f4 100%);
+color:var(--cream);font-family:Inter,Arial,sans-serif;min-height:100vh}
+.hero{position:relative;background:#47050a}
+.hero img{display:block;width:100%;height:auto;max-height:530px;object-fit:contain}
+.hero:after{content:'';position:absolute;bottom:0;left:0;right:0;height:28px;background:linear-gradient(transparent,#ffffff)}
+.intro{text-align:center;padding:20px 16px 8px}
+.eyebrow{font-size:11px;letter-spacing:.38em;color:var(--gold);text-transform:uppercase}
+.intro h1{font:600 clamp(27px,5vw,45px) Cinzel,Georgia,serif;margin:12px 0;color:#785425}
+.intro p{color:#665c54;font-size:14px}
+.ornament{color:var(--gold);margin:12px auto 0;letter-spacing:12px}
+.layout{max-width:1160px;margin:20px auto 80px;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.panel{background:#ffffff;border:1px solid rgba(173,137,78,.38);border-radius:16px;padding:26px;box-shadow:0 12px 35px #3d302014}
+.panel h2{font:500 23px Cinzel,Georgia,serif;color:#755020;margin:0 0 18px}
+.panel .sub{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#977038;margin-bottom:12px}.full{grid-column:1/-1}
+.category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.canto-item{border:1px solid #8e67455c;background:#fffdf9;color:#302922;border-radius:9px;padding:14px 15px;cursor:pointer;text-align:left;font:500 14px Inter,Arial,sans-serif;transition:.2s;overflow-wrap:anywhere}
+.canto-item:hover,.canto-item:focus-visible{background:#f7edd9;border-color:#e4bb72;outline:none}
+.category-grid .canto-item:before{content:'✧';color:var(--gold);margin-right:10px}
+.song-list{display:grid;gap:9px;max-height:460px;overflow:auto}.song-list .canto-item{display:flex;justify-content:space-between;align-items:center;gap:10px}.song-list .canto-item:after{content:'＋';font-size:21px;color:var(--gold)}select{width:100%;padding:15px 18px;background:#fffdf9;border:1px solid #bd945d;color:#302922;border-radius:9px;font:500 15px Inter,Arial,sans-serif}
+.selected-cantos .selected-row{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #c49b534a;padding:14px 0;font-size:14px}.selected-row .num{color:var(--gold);margin-right:13px}
+.remove-btn{background:none;border:1px solid #c5a77c;border-radius:7px;color:#76532f;padding:7px 11px;cursor:pointer;flex-shrink:0}
+.remove-btn:hover{background:#f5e8dc}.empty{color:#766e66;font-size:14px;line-height:1.7}.primary{background:linear-gradient(120deg,#eac989,#bc8845);color:#310d0d;border:0;border-radius:9px;padding:16px 25px;font:700 14px Inter,Arial,sans-serif;cursor:pointer;width:100%;letter-spacing:.03em}.primary:hover{filter:brightness(1.12)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px}.counter{color:var(--gold);font-size:13px}.overlay{position:fixed;inset:0;z-index:2000;background:#fff;display:none;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}.overlay img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center;transition:transform .15s ease}
+/* En celulares horizontales, lectura a ancho completo con desplazamiento vertical */
+@media (orientation:landscape) and (max-height:600px) and (pointer:coarse){
+.overlay{display:none;align-items:flex-start;justify-content:flex-start;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.overlay img{width:100%;height:auto;max-width:none;max-height:none;object-fit:fill;margin:0 auto}
+.viewer-top{position:fixed}
 }
-function showPage(){if(!toolkit||!total)return;lastSVG=toolkit.renderToSVG(page,{});$('paper').innerHTML=lastSVG;estilizarBreves();resizePaper();$('count').textContent=`Hoja ${page} de ${total}`;$('prev').disabled=page<=1;$('next').disabled=page>=total}
-function generate(){const ids=[...document.querySelectorAll('#choices input:checked')].map(e=>e.value);if(!ids.length){setStatus('Selecciona al menos un instrumento.');return}if(!toolkit){setStatus('Esperando motor de partituras…');return}try{setStatus('Maquetando '+ids.length+' instrumentos…');toolkit.setOptions({pageWidth:2100,pageHeight:2970,scale:40,breaks:'auto',adjustPageHeight:false,footer:'none',header:'none'});const ok=toolkit.loadData(filteredXML(ids));if(ok===false)throw Error('Verovio no pudo leer la selección');total=toolkit.getPageCount();if(!total)throw Error('No se generaron páginas');page=1;showPage();setStatus(`${ids.length} instrumentos · ${total} hoja(s) calculadas por Verovio`)}catch(e){console.error(e);setStatus('Error: '+e.message)}}
-$('all').onclick=()=>document.querySelectorAll('#choices input').forEach(e=>e.checked=true);$('none').onclick=()=>document.querySelectorAll('#choices input').forEach(e=>e.checked=false);$('render').onclick=generate;$('prev').onclick=()=>{if(page>1){page--;showPage()}};$('next').onclick=()=>{if(page<total){page++;showPage()}};let tx=0,ty=0;$('reader').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});$('reader').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.4){if(dx<0)$('next').click();else $('prev').click()}},{passive:true});window.addEventListener('resize',resizePaper);
-async function esperarVerovio(){
- // El módulo WASM puede estar inicializado antes de que asignemos el callback.
- // Probar el constructor evita perder el evento onRuntimeInitialized.
- const limit=Date.now()+60000;
- while(Date.now()<limit){
-   if(window.verovio?.toolkit){
-     try {return new window.verovio.toolkit()} catch(e) { /* WASM aún cargando */ }
-   }
-   await new Promise(resolve=>setTimeout(resolve,350));
- }
- throw Error('No se pudo iniciar Verovio. Revisa la conexión y vuelve a cargar la página.');
-}
-async function start(){try{
- const res=await fetch('Orquestaciones/portones.musicxml');
- if(!res.ok)throw Error('No se encontró el MusicXML (usa GitHub Pages, no file://)');
- original=await res.text();const d=xmlDoc(original);
- parts=[...d.getElementsByTagName('score-part')].map(p=>({id:p.getAttribute('id'),name:p.getElementsByTagName('part-name')[0]?.textContent||p.getAttribute('id')}));
- $('choices').replaceChildren(...parts.map(p=>{const label=document.createElement('label');label.className='choice';const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.checked=true;label.append(input,document.createTextNode(p.name));return label}));
- setStatus('Iniciando Verovio…');toolkit=await esperarVerovio();generate();
-}catch(e){console.error(e);setStatus('Error: '+e.message)}}start();
-</script></body></html>
+.viewer-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85),0 0 9px rgba(0,0,0,.55);padding:10px 16px;z-index:3;font-size:13px;transition:opacity .55s ease,visibility .55s ease}
+.viewer-top button{border:0;background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);border-radius:7px;padding:9px 13px;cursor:pointer}.viewer-top.oculto{opacity:0;visibility:hidden;pointer-events:none}
+
+.footer{text-align:center;color:#8c765c;font-size:12px;padding:0 15px 32px}
+.hidden{display:none!important}@media(max-width:720px){.layout{grid-template-columns:1fr;padding:0 13px;gap:14px;margin-top:10px}
+.panel{padding:20px}.hero img{min-height:160px;object-fit:cover;object-position:center}.intro{padding-top:12px}
+.category-grid{grid-template-columns:1fr 1fr}.panel h2{font-size:20px}}</style>
+</head>
+<body>
+    <header class="hero"><img src="cabecera-belem.png" alt="Ángeles músicos y escudo del Coro Belém"></header>
+    <section class="intro"><div class="eyebrow">Música litúgica · Esquema de cantos</div><h1>Orquesta Belém</h1></section>
+    <main class="layout"><section class="panel full">
+        <h2>Tiempo litúrgico</h2><select id="esquemaSelect" onchange="cargarCategorias()"><option value="" disabled selected>Selecciona un tiempo litúrgico</option>
+            <option value="Ordinario">Tiempo Ordinario</option>
+            <option value="Cuaresma">Cuaresma</option><option value="Pascua">Pascua</option></select></section><section class="panel" id="listaCategorias">
+                <h2>Categorías</h2><p class="empty">Selecciona primero un tiempo litúrgico.</p></section><section class="panel" id="listaCantos">
+                <h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p></section>
+                <section class="panel full selected-cantos" id="esquemaCantos">
+                    <div class="toolbar"><h2>Esquema de cantos</h2>
+                        <span class="counter" id="count">0 cantos</span></div><p class="empty">No has seleccionado ningún canto.</p></section><section class="full"><button class="primary" onclick="generarCancionero()"> &nbsp; Generar cancionero</button></section></main>
+                        <footer class="footer">CORO BELÉM</footer>
+    <div class="overlay" id="overlay"><div class="viewer-top"><span id="pageIndicator">Partitura</span>
+        <button onclick="cerrarCancionero()">✕ Cerrar</button></div>
+        <img id="imagenActual" alt="Partitura seleccionada">
+        </div><script>const cantosEsquemas={
+            "Ordinario": {
+                "Entrada": [
+                { titulo: "Portones - Xavier Gonzalez", imgs: ["Entrada/Portones - Xavier.jpg"] },
+                { titulo: "Reunidos - Francisco Palazón", imgs: ["Entrada/Reunidos_1.jpg", "Entrada/Reunidos_2.jpg", "Entrada/Reunidos_3.jpg"] },
+                { titulo: "Un solo señor - Lucien Deiss", imgs: ["Entrada/Un solo_1.jpg","Entrada/Un solo_2.jpg"] },
+                { titulo: "Juntos como hermanos - Cesáreo Gabaráin", imgs: ["Entrada/juntos.jpg"] },
+                { titulo: "Pueblo de reyes - Lucien Deiss", imgs: ["Entrada/Pueblo2.jpg","Entrada/Pueblo1.jpg"] },
+                { titulo: "Venimos hoy a tu altar - Bravo", imgs: ["Entrada/venimoshoy.jpg"] },
+                { titulo: "Hacia ti, morada santa - Kiko Argüello", imgs: ["Entrada/moradasanta.jpg"] },
+                { titulo: "Dios nos convoca", imgs: ["Entrada/dios.jpg"] }
+            ],
+            "Ten Piedad": [
+                { titulo: "Señor ten piedad Xavier Gonzalez", imgs: ["Ten piedad/Señor ten piedad - Xavier 1.jpg", "Ten piedad/Señor ten piedad - Xavier 2.jpg"] },
+                { titulo: "Señor ten piedad Palazón", imgs: ["Ten piedad/Señor ten piedad - Palazon.jpg"] },
+                { titulo: "Señor ten piedad Pbro. Lic. Ricardo Ignacio", imgs: ["Ten piedad/Señor ten piedad - Alaniz 1.jpg", "Ten piedad/Señor ten piedad - Alaniz 2.jpg"] },
+                { titulo: "Señor ten piedad Benigna Carrillo - Buen Pastor", imgs: ["Ten piedad/Señor ten piedad - Buen pastor.jpg"] },
+                { titulo: "Señor ten piedad Garcia Virgen", imgs: ["Ten piedad/Señor ten piedad - Garcia.jpg"] },
+                { titulo: "Señor ten piedad 58", imgs: ["Ten piedad/Señor ten piedad - 58.jpg"] }
+            ],
+            "Gloria": [
+                { titulo: "Gloria Benjamín Rangel - Misa Guadalupana", imgs: ["Gloria/Gloria Benja1.jpg","Gloria/Gloria Benja2.jpg","Gloria/Gloria Benja3.jpg","Gloria/Gloria Benja4.jpg"] },
+                { titulo: "Gloria Pbro. Lic. Ricardo Ignacio", imgs: ["Gloria/GloriaRicardo1.jpg", "Gloria/GloriaRicardo2.jpg", "Gloria/GloriaRicardo3.jpg", "Gloria/GloriaRicardo4.jpg", "Gloria/GloriaRicardo5.jpg"
+                                                                     , "Gloria/GloriaRicardo6.jpg", "Gloria/GloriaRicardo7.jpg"] },
+                { titulo: "Gloria Benigna Carrillo - Buen Pastor", imgs: ["Gloria/GloriaBenigna1.jpg", "Gloria/GloriaBenigna2.jpg"] },
+                { titulo: "Gloria A. Mejía - Melodica", imgs: ["Gloria/GloriaMejiaMelodica1.jpg", "Gloria/GloriaMejiaMelodica2.jpg","Gloria/GloriaMejiaMelodica3.jpg","Gloria/GloriaMejiaMelodica4.jpg",
+                                                              "Gloria/GloriaMejiaMelodica5.jpg",] },
+                { titulo: "Gloria A. Mejía - Rítmica", imgs: ["Gloria/GloriaMejiaRitmica1.jpg", "Gloria/GloriaMejiaRitmica2.jpg"] },
+                { titulo: "Gloria Palazón", imgs: ["Gloria/GloriaPalazon1.jpg", "Gloria/GloriaPalazon2.jpg"] },
+                { titulo: "Gloria al señor - Popular", imgs: ["Gloria/Gloria al señor.jpg"] },
+                { titulo: "Gloria Xavier Gonzalez - Señora y niña mía", imgs: ["Gloria/Gloria xavier1.jpg", "Gloria/Gloria xavier2.jpg", "Gloria/Gloria xavier3.jpg",
+                                                                "Gloria/Gloria xavier4.jpg", "Gloria/Gloria xavier5.jpg","Gloria/Gloria xavier6.jpg"]}
+            ],
+            "Aleluya": [
+                { titulo: "Festival Alleluia - James Chepponis", imgs: ["Aleluya/Festival1.jpg","Aleluya/Festival2.jpg","Aleluya/Festival3.jpg","Aleluya/festival4.jpg"] },
+                { titulo: "Aleluya Taizé 4", imgs: ["Aleluya/Aleluya Taizé.jpeg"] },
+                { titulo: "Aleluya Taizé 7", imgs: ["Aleluya/Aleluya Taize 7.jpg"] },
+                { titulo: "Aleluya A. Mejía - Melodica", imgs: ["Aleluya/AleluyaMejiaM1.jpeg","Aleluya/AleluyaMejiaM2.jpeg"] },
+                { titulo: "Aleluya A. Mejía - Rítmica", imgs: ["Aleluya/Aleluya 50.jpeg"] },
+                { titulo: "Aleluya A. Mejía - Coral", imgs: ["Aleluya/M Coral 1.jpeg", "Aleluya/M Coral 2.jpeg"] },
+                { titulo: "Aleluya Benigna Carrillo - Buen Pastor", imgs: ["Aleluya/AleluyaBenigna.jpeg"] },
+                { titulo: "Aleluya Mary Frances", imgs: ["Aleluya/Mary Frances.jpeg"] },
+                { titulo: "Aleluya Jesús B., msp", imgs: ["Aleluya/AleluyaPaz.jpg"] },
+                { titulo: "Aleluya José Netza Pineda - Modal", imgs: ["Aleluya/AleluyaModal.jpg"] },
+                { titulo: "Aleluya  Ordinario", imgs: ["Aleluya/Ordinario.jpeg"] },
+                { titulo: "Aleluya Varios - 161, 163, 189", imgs: ["Aleluya/A 161, 163, 189.jpeg"] },
+                { titulo: "Aleluya Varios - I y II", imgs: ["Aleluya/Aleluya I y II.jpeg"] }
+                
+            ],
+             "Ofertorio": [
+                { titulo: "Recibe - Delfino Madrigal", imgs: ["Ofertorio/Recibe Delfino.jpg"] },
+                { titulo: "Nos has dado tu vida - Coral atribuido a J. Sebastian Bach", imgs: ["Ofertorio/Nos has.jpg"] },
+                { titulo: "Pan de los trigales - Benjamín Rangel G.", imgs: ["Ofertorio/Pan de los trigales.jpg"] },
+                { titulo: "Este pan y vino - Carmelo Erdozain", imgs: ["Ofertorio/Este pan 1.jpg", "Ofertorio/Este pan 2.jpg"] }
+            ],
+             "Santo": [
+                { titulo: "Santo Marco Frisina", imgs: ["Santo/Santo Frisina1.jpg", "Santo/Santo Frisina2.jpg","Santo/Santo Frisina3.jpg"] },
+                { titulo: "Santo Garcia Virgen", imgs: ["Santo/Santo Garcia1.jpg", "Santo/Santo Garcia2.jpg"] },
+                { titulo: "Santo Juan Jauregui", imgs: ["Santo/Santo Jauregui.jpg"] },
+                { titulo: "Santo Mary Frances", imgs: ["Santo/Santo Mary.jpg"] },
+                { titulo: "Santo Alfonso Luna", imgs: ["Santo/Santo Luna1.jpg", "Santo/Santo Luna2.jpg"] },
+                { titulo: "Santo José Netza Pineda - Modal", imgs: ["Santo/Santo Jose.jpg"] },
+                { titulo: "Santo A. Mejía - Melodica", imgs: ["Santo/Santo Mejia Melodica1.jpg","Santo/Santo Mejia Melodica2.jpg"] },
+                { titulo: "Santo A. Mejía - Rítmica", imgs: ["Santo/Santo Mejia Ritmica1.jpg"] },
+                { titulo: "Santo Palazón", imgs: ["Santo/SantoPalazon.jpg","Santo/SantoPalazon2.jpg","Santo/SantoPalazon3.jpg"] },
+                { titulo: "Santo Benigna Carrillo - Buen pastor", imgs: ["Santo/Santo Benigna.jpg"] }
+            ],
+            "Aclamaciones": [
+                { titulo: "Aclamción A. Mejía - Rítmica", imgs: ["Aclamaciones/Aclamacion Mejia.jpg"] },
+                { titulo: "Amén A. Mejía - Rítmica", imgs: ["Aclamaciones/Amen Mejia.jpg"] }
+            ],
+             "Cordero": [
+                { titulo: "Cordero Marco Frisina", imgs: ["Cordero/CorderoFrisina1.jpg", "Cordero/CorderoFrisina2.jpg","Cordero/CorderoFrisina3.jpg"] },
+                { titulo: "Cordero Benigna Carrillo - Buen pastor", imgs: ["Cordero/Buen Pastor.jpeg"] },
+                { titulo: "Cordero J. A. Espinosa", imgs: ["Cordero/CorderoEspinosa.jpg"] },
+                { titulo: "Cordero Julián A. López - Verbo encarnado", imgs: ["Cordero/CorderoJulian.jpg"] },
+                { titulo: "Cordero A. Mejía - Melodica", imgs: ["Cordero/CorderoMejiaM1.jpeg","Cordero/CorderoMejiaM2.jpeg"] },
+                { titulo: "CorderoA. Mejía - Rítmica", imgs: ["Cordero/CorderoMejiaR.jpg"] },
+                { titulo: "Cordero José Netza Pineda - Modal", imgs: ["Cordero/CorderoModal.jpeg"] },
+                { titulo: "Cordero Palazón", imgs: ["Cordero/CorderoPalazon.jpg","Cordero/CorderoPalazon2.jpg"] },
+                { titulo: "Cordero Mary Frances", imgs: ["Cordero/Mary Frances 1.1.jpeg","Cordero/Mary Frances 1.2.jpeg"] },
+                { titulo: "Cordero Mary Frances - Lamb of God", imgs: ["Cordero/Mary Frances 2.jpeg"] },
+                { titulo: "Cordero Luis E., msp", imgs: ["Cordero/Paz y Perdón.jpeg"] }
+            ],
+            "Comunión": [
+                { titulo: "Oh Señor, Delante de Ti - Carmelo Erdozáin", imgs: ["Comunion/DELANTE DE TI.jpg"] }
+            ],
+            "Himnos": [
+                { titulo: "Cordero A. Mejía - Rítmica", imgs: ["gloria/gloriaBenigna1.jpg", "gloriabenigna2.jpg"] }
+            ]
+            ,
+            "Cantoral Adoración Nocturna": [
+                { titulo: "Cantoral Adoración Nocturna Mexicana", 
+                imgs: ["Adoracion/cantoral_page-0001.jpg","Adoracion/cantoral_page-0002.jpg","Adoracion/cantoral_page-0003.jpg","Adoracion/cantoral_page-0004.jpg","Adoracion/cantoral_page-0005.jpg","Adoracion/cantoral_page-0006.jpg","Adoracion/cantoral_page-0007.jpg","Adoracion/cantoral_page-0008.jpg","Adoracion/cantoral_page-0009.jpg","Adoracion/cantoral_page-0010.jpg",
+                       "Adoracion/cantoral_page-0011.jpg","Adoracion/cantoral_page-0012.jpg","Adoracion/cantoral_page-0013.jpg","Adoracion/cantoral_page-0014.jpg","Adoracion/cantoral_page-0015.jpg","Adoracion/cantoral_page-0016.jpg","Adoracion/cantoral_page-0017.jpg","Adoracion/cantoral_page-0018.jpg","Adoracion/cantoral_page-0019.jpg","Adoracion/cantoral_page-0020.jpg",
+                       "Adoracion/cantoral_page-0021.jpg","Adoracion/cantoral_page-0022.jpg","Adoracion/cantoral_page-0023.jpg","Adoracion/cantoral_page-0024.jpg","Adoracion/cantoral_page-0025.jpg","Adoracion/cantoral_page-0026.jpg","Adoracion/cantoral_page-0027.jpg","Adoracion/cantoral_page-0028.jpg","Adoracion/cantoral_page-0029.jpg","Adoracion/cantoral_page-0030.jpg",
+                       "Adoracion/cantoral_page-0031.jpg","Adoracion/cantoral_page-0032.jpg","Adoracion/cantoral_page-0033.jpg", "Adoracion/cantoral_page-0034.jpg","Adoracion/cantoral_page-0035.jpg","Adoracion/cantoral_page-0036.jpg","Adoracion/cantoral_page-0037.jpg","Adoracion/cantoral_page-0038.jpg","Adoracion/cantoral_page-0039.jpg","Adoracion/cantoral_page-0040.jpg",
+                       "Adoracion/cantoral_page-0041.jpg","Adoracion/cantoral_page-0042.jpg","Adoracion/cantoral_page-0042-.jpg","Adoracion/cantoral_page-0043.jpg","Adoracion/cantoral_page-0044.jpg","Adoracion/cantoral_page-0045.jpg","Adoracion/cantoral_page-0046.jpg","Adoracion/cantoral_page-0047.jpg","Adoracion/cantoral_page-0048.jpg","Adoracion/cantoral_page-0049.jpg","Adoracion/cantoral_page-0050.jpg",
+                       "Adoracion/cantoral_page-0051.jpg","Adoracion/cantoral_page-0052.jpg","Adoracion/cantoral_page-0053.jpg","Adoracion/cantoral_page-0054.jpg","Adoracion/cantoral_page-0055.jpg","Adoracion/cantoral_page-0056.jpg","Adoracion/cantoral_page-0057.jpg","Adoracion/cantoral_page-0058.jpg","Adoracion/cantoral_page-0059.jpg","Adoracion/cantoral_page-0060.jpg",
+                       "Adoracion/cantoral_page-0061.jpg","Adoracion/cantoral_page-0062.jpg","Adoracion/cantoral_page-0063.jpg"] }
+            ]
+            
+            
+        },
+            "Cuaresma": {
+                "Entrada": [
+                    { titulo: "Desde lo hondo", imgs: ["EntradaCuaresma/Desde1.jpg","EntradaCuaresma/Desde2.jpg"] }
+                ],
+                "Honor y Gloria": [
+                    { titulo: "Honor y gloria - Arre. Gabriel Frausto Z.", imgs: ["Honor/Honor.jpg"] },
+                    { titulo: "Honor y gloria - Adán Hernández L.", imgs: ["Honor/Honor Adan1.jpg", "Honor/Honor Adan1.jpg"] }
+                ],
+                "Comunión": [
+                    { titulo: "Si alguno me quiere seguir", imgs: ["ComunionCuaresma/SI ALGUNO 1.jpg", "ComunionCuaresma/SI ALGUNO 2.jpg"] }
+                ]
+            },
+            "Pascua": {
+                "Entrada": [
+                    { titulo: "Desde lo hondo", imgs: ["EntradaCuaresma/Desde1.jpg","EntradaCuaresma/Desde2.jpg"] }
+                ],
+                "Honor y Gloria": [
+                    { titulo: "Honor y gloria - Arre. Gabriel Frausto Z.", imgs: ["Honor/Honor.jpg"] },
+                    { titulo: "Honor y gloria - Adán Hernández L.", imgs: ["Honor/Honor Adan1.jpg", "Honor/Honor Adan1.jpg"] }
+                ],
+                "Comunión": [
+                    { titulo: "Si alguno me quiere seguir", imgs: ["ComunionCuaresma/SI ALGUNO 1.jpg", "ComunionCuaresma/SI ALGUNO 2.jpg"] }
+                ]
+            }
+        };
+
+let seleccionados=[],imagenes=[],indice=0,scale=1;const $=id=>document.getElementById(id);
+function cargarCategorias(){const esq=$('esquemaSelect').value;const root=$('listaCategorias');root.innerHTML='<h2>Categorías</h2><div class="category-grid" id="catGrid"></div>';
+for(const cat of Object.keys(cantosEsquemas[esq])){const b=document.createElement('button');b.className='canto-item';b.textContent=cat;b.onclick=()=>mostrarCantos(cat,esq);$('catGrid').appendChild(b)}$('listaCantos').innerHTML='<h2>Cantos disponibles</h2><p class="empty">Elige una categoría para ver sus cantos.</p>'}
+    function mostrarCantos(cat,esq){const root=$('listaCantos');root.innerHTML='<h2></h2><div class="song-list" id="songList"></div>';root.querySelector('h2').textContent=cat;
+    for(const c of cantosEsquemas[esq][cat]){const b=document.createElement('button');b.className='canto-item';b.textContent=c.titulo;b.onclick=()=>{seleccionados.push(c);actualizar()};$('songList').appendChild(b)}}function actualizar(){const root=$('esquemaCantos');root.innerHTML='<div class="toolbar"><h2>Esquema de cantos</h2><span class="counter">'+seleccionados.length+' cantos</span></div>';
+        if(!seleccionados.length){root.insertAdjacentHTML('beforeend','<p class="empty">No has seleccionado ningún canto.</p>');
+        return}seleccionados.forEach((c,i)=>{const d=document.createElement('div');d.className='selected-row';const label=document.createElement('span');const n=document.createElement('span');n.className='num';n.textContent=String(i+1).padStart(2,'0');label.append(n,document.createTextNode(c.titulo));
+        const b=document.createElement('button');b.className='remove-btn';b.textContent='Quitar';b.onclick=()=>{seleccionados.splice(i,1);actualizar()};d.append(label,b);root.appendChild(d)})}function generarCancionero(){imagenes=seleccionados.flatMap(c=>c.imgs);if(!imagenes.length){alert('Selecciona al menos un canto para generar tu cancionero.');return}indice=0;$('overlay').style.display='flex';mostrarImagen();mostrarControles();const visor=$('overlay');if(visor.requestFullscreen){try{const solicitud=visor.requestFullscreen();
+    if(solicitud&&solicitud.catch)solicitud.catch(()=>{});}catch(error){}}}function mostrarImagen(){scale=1;$('imagenActual').style.transform='scale(1)';$('imagenActual').src=imagenes[indice];$('pageIndicator').textContent='Partitura '+(indice+1)+' de '+imagenes.length}function navegar(delta){indice=(indice+delta+imagenes.length)%imagenes.length;mostrarImagen()}function cerrarCancionero(){$('overlay').style.display='none';clearTimeout(temporizadorControles);if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(()=>{})}}let temporizadorControles;
+function mostrarControles(){clearTimeout(temporizadorControles);document.querySelector('.viewer-top').classList.remove('oculto');temporizadorControles=setTimeout(()=>document.querySelector('.viewer-top').classList.add('oculto'),3000)}$('overlay').addEventListener('click',e=>{if(e.target.closest('.viewer-top')||('ontouchstart' in window))return;mostrarControles()});let startX=0,startY=0;$('overlay').addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});$('overlay').addEventListener('touchend',e=>{if(e.target.closest('.viewer-top'))return;const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;
+        if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.2&&scale===1){navegar(dx>0?-1:1)}else if(Math.abs(dx)<15&&Math.abs(dy)<15){mostrarControles()}},{passive:true});$('imagenActual').addEventListener('wheel',e=>{e.preventDefault();scale=Math.max(1,Math.min(5,scale-e.deltaY*.001));$('imagenActual').style.transform='scale('+scale+')'},{passive:false});document.addEventListener('keydown',e=>{if($('overlay').style.display!=='flex')return;if(e.key==='Escape')cerrarCancionero();
+    if(e.key==='ArrowRight')navegar(1);if(e.key==='ArrowLeft')navegar(-1)});window.addEventListener('beforeunload',e=>{if(seleccionados.length){e.preventDefault();e.returnValue=''}});</script></body></html>
